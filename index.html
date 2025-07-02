@@ -1,19 +1,4 @@
-// Enhanced fetch with CORS proxy fallback
-  async function cancellableFetch(url, options = {}) {
-    let lastError;
-    
-    // If running locally, show warning
-    if (isRunningLocally && !window.corsWarningShown) {
-      logMessage("⚠️ Running from local file detected. CORS proxies may be limited.\n");
-      logMessage("   For best results, use a local web server (see instructions below).\n\n");
-      window.corsWarningShown = true;
-    }
-    
-    for (let i = 0; i < CORS_PROXIES.length; i++) {
-      const proxyIndex = (currentProxyIndex + i) % CORS_PROXIES.length;
-      const proxy = CORS_PROXIES[proxyIndex];
-      
-      //<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -95,16 +80,6 @@
 
 <div class="section" id="config-section">
   <h2>Configuration</h2>
-  <div id="cors-warning" style="display:none; background-color:#fff3cd; border:1px solid #ffeaa7; padding:10px; margin-bottom:15px; border-radius:5px;">
-    <strong>⚠️ Local File Detected - CORS Issues Expected</strong><br>
-    <p style="margin:5px 0;">This tool needs to be hosted online to work properly. Quick solutions:</p>
-    <ol style="margin:5px 0 5px 20px;">
-      <li><strong>GitHub Pages</strong>: Upload to GitHub, enable Pages (free)</li>
-      <li><strong>Netlify</strong>: Drag file to <a href="https://netlify.com" target="_blank">netlify.com</a></li>
-      <li><strong>Local Server</strong>: Run <code>python -m http.server 8000</code></li>
-    </ol>
-  </div>
-  
   <label for="api-key">OpenAI API Key:</label><br>
   <input type="password" id="api-key" placeholder="Enter your OpenAI API key" size="50" />
   <button id="test-api-btn" style="margin-left: 10px;">Test API Key</button>
@@ -302,23 +277,12 @@ Make the summary comprehensive but accessible to both researchers and clinicians
 
   // CORS proxy configuration - with fallback options
   const CORS_PROXIES = [
-    'https://corsproxy.io/?',
-    'https://api.codetabs.com/v1/proxy?quest=',
-    'https://proxy.cors.sh/',
-    'https://api.allorigins.win/raw?url='
+    'https://api.allorigins.win/raw?url=',
+    'https://cors-anywhere.herokuapp.com/',
+    'https://cors.bridged.cc/'
   ];
   let currentProxyIndex = 0;
   const NCBI_REQUEST_DELAY_MS = 400;
-  
-  // Detect if running locally
-  const isRunningLocally = window.location.protocol === 'file:';
-  if (isRunningLocally) {
-    console.warn('⚠️ Running locally detected. CORS proxies may not work properly.');
-    console.warn('Solutions:');
-    console.warn('1. Host on GitHub Pages (recommended)');
-    console.warn('2. Use local server: python -m http.server 8000');
-    console.warn('3. Upload to Netlify (drag & drop)');
-  }
 
   // ========== Helper Functions for API Calls ==========
   
@@ -444,54 +408,25 @@ Make the summary comprehensive but accessible to both researchers and clinicians
   async function cancellableFetch(url, options = {}) {
     let lastError;
     
-    // If running locally, show warning with specific instructions
-    if (isRunningLocally && !window.corsWarningShown) {
-      logMessage("⚠️ WARNING: Running from local file detected. This causes CORS errors.\n");
-      logMessage("🔧 SOLUTIONS:\n");
-      logMessage("   1. Quick: Upload to GitHub Pages (free hosting)\n");
-      logMessage("   2. Instant: Drag file to netlify.com\n");
-      logMessage("   3. Local: Run 'python -m http.server 8000' in file directory\n");
-      logMessage("   4. VS Code: Use Live Server extension\n\n");
-      window.corsWarningShown = true;
-    }
-    
-    // Try direct fetch first (in case no proxy is needed)
-    if (!url.includes('ncbi.nlm.nih.gov')) {
-      try {
-        const response = await fetch(url, { ...options, signal: abortController?.signal });
-        if (response.ok) return response;
-      } catch (e) {
-        // Continue to proxy attempts
-      }
-    }
-    
-    // Try each proxy
     for (let i = 0; i < CORS_PROXIES.length; i++) {
       const proxyIndex = (currentProxyIndex + i) % CORS_PROXIES.length;
-      const proxy = CORS_PROXIES[proxyIndex];
-      const proxiedUrl = proxy + encodeURIComponent(url);
+      const proxiedUrl = `${CORS_PROXIES[proxyIndex]}${encodeURIComponent(url)}`;
       
       try {
         const response = await fetch(proxiedUrl, { ...options, signal: abortController?.signal });
         if (response.ok) {
           currentProxyIndex = proxyIndex; // Remember working proxy
-          if (i > 0) {
-            console.log(`✓ CORS proxy ${proxy} worked after ${i} failed attempts`);
-          }
           return response;
         }
-        lastError = new Error(`Proxy ${proxy} returned status ${response.status}`);
+        lastError = new Error(`Proxy returned status ${response.status}`);
       } catch (error) {
         lastError = error;
         if (error.name === 'AbortError') {
           throw error; // Don't retry on abort
         }
-        console.warn(`CORS proxy ${proxy} failed:`, error.message);
       }
     }
     
-    // All proxies failed
-    logMessage(`❌ All CORS proxies failed. ${isRunningLocally ? 'Please host this file online.' : 'Try again later.'}\n`);
     throw lastError || new Error('All CORS proxies failed');
   }
 
@@ -1075,11 +1010,6 @@ Make the summary comprehensive but accessible to both researchers and clinicians
   // Auto-focus on query input when page loads
   window.addEventListener('load', () => {
     document.getElementById("query-input").focus();
-    
-    // Check if running locally and show warning
-    if (window.location.protocol === 'file:') {
-      document.getElementById('cors-warning').style.display = 'block';
-    }
   });
 </script>
 </body>
