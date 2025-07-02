@@ -1,0 +1,1086 @@
+// Enhanced fetch with CORS proxy fallback
+  async function cancellableFetch(url, options = {}) {
+    let lastError;
+    
+    // If running locally, show warning
+    if (isRunningLocally && !window.corsWarningShown) {
+      logMessage("⚠️ Running from local file detected. CORS proxies may be limited.\n");
+      logMessage("   For best results, use a local web server (see instructions below).\n\n");
+      window.corsWarningShown = true;
+    }
+    
+    for (let i = 0; i < CORS_PROXIES.length; i++) {
+      const proxyIndex = (currentProxyIndex + i) % CORS_PROXIES.length;
+      const proxy = CORS_PROXIES[proxyIndex];
+      
+      //<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI-Powered PubMed Research Tool</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 20px; 
+    } 
+    h1, h2, h3 { 
+      color: #2E5AAC; 
+    } 
+    label { 
+      font-weight: bold; 
+    } 
+    input, select, button, textarea { 
+      margin: 5px 0; 
+      padding: 6px; 
+      border: 1px solid #ccc; 
+      border-radius: 4px; 
+    } 
+    .section { 
+      border: 1px solid #ccc; 
+      padding: 15px; 
+      margin-bottom: 20px; 
+      border-radius: 5px; 
+    } 
+    #progress-status { 
+      font-style: italic; 
+      color: #555; 
+      margin-top: 5px; 
+    } 
+    #iteration-log, #results, #summary, #evolution, #rankings { 
+      width: 100%; 
+      max-height: 300px; 
+      overflow-y: auto; 
+      white-space: pre-wrap; 
+      background: #f9f9f9; 
+      padding: 10px; 
+      font-family: Courier, monospace; 
+      font-size: 0.95em; 
+      border: 1px solid #ddd; 
+      box-sizing: border-box; 
+    } 
+    .invalid-mesh { 
+      background-color: #ffe6e6; 
+      color: #900; 
+      font-weight: bold; 
+      padding: 0 3px; 
+      border-radius: 3px; 
+    } 
+    button:disabled { 
+      background-color: #e0e0e0; 
+      cursor: not-allowed; 
+    }
+    .error-message {
+      color: #d00;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+    .api-test-result {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .api-test-success {
+      background-color: #e6ffe6;
+      color: #090;
+    }
+    .api-test-failure {
+      background-color: #ffe6e6;
+      color: #900;
+    }
+  </style>
+</head>
+<body>
+<h1>Advanced Iterative PubMed Research (Web Version)</h1>
+
+<div class="section" id="config-section">
+  <h2>Configuration</h2>
+  <div id="cors-warning" style="display:none; background-color:#fff3cd; border:1px solid #ffeaa7; padding:10px; margin-bottom:15px; border-radius:5px;">
+    <strong>⚠️ Local File Detected - CORS Issues Expected</strong><br>
+    <p style="margin:5px 0;">This tool needs to be hosted online to work properly. Quick solutions:</p>
+    <ol style="margin:5px 0 5px 20px;">
+      <li><strong>GitHub Pages</strong>: Upload to GitHub, enable Pages (free)</li>
+      <li><strong>Netlify</strong>: Drag file to <a href="https://netlify.com" target="_blank">netlify.com</a></li>
+      <li><strong>Local Server</strong>: Run <code>python -m http.server 8000</code></li>
+    </ol>
+  </div>
+  
+  <label for="api-key">OpenAI API Key:</label><br>
+  <input type="password" id="api-key" placeholder="Enter your OpenAI API key" size="50" />
+  <button id="test-api-btn" style="margin-left: 10px;">Test API Key</button>
+  <div id="api-test-result"></div>
+  <p style="font-size: 0.9em; color: #666; margin-top: 0;">
+    * Your API key is used client-side and is NOT stored on any server.<br>
+    * OpenAI API keys can start with sk-, sk-proj-, or other prefixes.
+  </p>
+  
+  <label for="model-select">AI Model:</label><br>
+  <select id="model-select">
+    <option value="gpt-4-turbo">GPT-4 Turbo</option>
+    <option value="gpt-4">GPT-4</option>
+    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+  </select>
+</div>
+
+<div class="section" id="query-section">
+  <h2>Research Query</h2>
+  <label for="query-input">Enter your medical research question:</label><br>
+  <input type="text" id="query-input" size="80" placeholder="e.g. 'effects of Vitamin D on asthma outcomes'" />
+  
+  <h3>Search Parameters</h3>
+  <label for="iterations">Iterations:</label>
+  <input type="number" id="iterations" value="4" min="2" max="8" style="width:60px;" />
+  
+  <label for="articles-per-iter">Articles per iteration:</label>
+  <input type="number" id="articles-per-iter" value="15" min="10" max="50" style="width:60px;" />
+  
+  <label for="top-articles">Top articles to analyze per iteration:</label>
+  <input type="number" id="top-articles" value="5" min="3" max="10" style="width:60px;" />
+  <br>
+  
+  <button id="start-btn" style="margin-top: 10px; font-weight:bold; padding:8px 15px;">🔍 Start Iterative Search</button>
+  <button id="cancel-btn" style="margin-top: 10px; font-weight:bold; padding:8px 15px; display:none;">❌ Cancel Search</button>
+  <span id="progress-status"></span>
+</div>
+
+<div class="section" id="log-section">
+  <h2>Iteration Progress</h2>
+  <div id="iteration-log" aria-live="polite"></div>
+</div>
+
+<div class="section" id="results-section">
+  <h2>Results & Analysis</h2>
+  <h3>Top Articles (with Abstracts)</h3>
+  <div id="results"></div>
+  
+  <h3>AI Summary of Top Articles</h3>
+  <label for="summary-count">Summarize top</label>
+  <input type="number" id="summary-count" value="5" min="3" max="15" style="width:50px;" /> articles
+  <button id="summary-btn">Generate Summary</button>
+  <div id="summary"></div>
+</div>
+
+<div class="section" id="evolution-section">
+  <h2>Search Evolution Overview</h2>
+  <div id="evolution"></div>
+  
+  <h3>Complete Article Rankings</h3>
+  <div id="rankings"></div>
+</div>
+
+<script>
+  // ========== Prompt Templates ==========
+  const PromptTemplates = {
+    INITIAL_SEARCH_TERMS: `You are a medical research expert. Generate 4-5 diverse, optimized PubMed search strategies for this query: "{query}"
+
+Create strategies that range from:
+1. Highly specific (narrow, precise terms)
+2. Moderately specific (balanced approach)
+3. Broader conceptual (related concepts)
+4. Alternative terminology (synonyms, related fields)
+5. Systematic/review focused (if applicable)
+
+Use proper PubMed syntax:
+- MeSH terms in [brackets]
+- Boolean operators (AND, OR, NOT)
+- Field tags [ti], [ab], [au]
+- Quotation marks for exact phrases
+
+Return only a JSON array of search strings:
+["search1", "search2", "search3", "search4", "search5"]`,
+
+    REFINED_SEARCH_TERMS: `Based on the search evolution below, generate 4-5 NEW and IMPROVED PubMed search strategies.
+
+{context}
+
+IMPORTANT: 
+- DO NOT repeat previous search strategies
+- Learn from what worked/didn't work
+- Try different angles, terminology, and approaches
+- Focus on gaps or promising directions from previous results
+- Consider the "next strategy" suggestions from previous iterations
+
+Generate diverse new search terms using proper PubMed syntax.
+
+Return only a JSON array of search strings:
+["search1", "search2", "search3", "search4", "search5"]`,
+
+    ARTICLE_ANALYSIS: `Analyze these medical research articles for relevance to the query: "{query}"
+
+For each article, provide:
+1. Relevance score (0-100, where 100 = perfectly relevant)
+2. Brief reasoning (2-3 sentences explaining why it's relevant/not relevant)
+
+Articles to analyze:
+{articles}
+
+Return a JSON array with this format:
+[
+  {"index": 1, "score": 85, "reasoning": "This study directly addresses... because..."},
+  {"index": 2, "score": 72, "reasoning": "Relevant to the query as it..."}
+]
+
+Focus on how well each article addresses the specific research question or clinical need.`,
+
+    ITERATION_INSIGHTS: `Analyze this PubMed search iteration for the query: "{query}"
+
+Iteration {iteration} Results:
+Search terms used: {search_terms}
+
+Top articles found:
+{articles_summary}
+
+Provide analysis in this format:
+
+ANALYSIS:
+[Evaluate what worked well and what didn't in this iteration]
+
+LESSONS LEARNED:
+[Key insights for improving future searches]
+
+NEXT STRATEGY:
+[Specific recommendations for the next iteration's search approach]
+
+Keep each section concise but insightful.`,
+
+    FINAL_RANKING: `Perform final comprehensive ranking of these articles for the query: "{query}"
+
+Consider:
+- Direct relevance to the research question
+- Quality and recency of the research
+- Clinical significance
+- Methodological rigor (based on abstract)
+
+Articles to rank:
+{articles}
+
+Return a JSON array with the article numbers in order from MOST to LEAST relevant:
+[3, 1, 7, 2, 5, ...]
+
+Include all {count} articles in your ranking.`,
+
+    SEARCH_SUMMARY: `Create a comprehensive summary of this iterative PubMed search:
+
+{summary_data}
+
+Provide:
+1. Overall search effectiveness and evolution
+2. Key insights about the research landscape for this topic
+3. Quality of results obtained
+4. Search strategy effectiveness
+
+Keep it concise but informative (3-4 paragraphs).`,
+
+    ABSTRACT_SUMMARY: `Analyze and summarize these top research articles:
+
+{abstracts}
+
+Provide:
+1. OVERVIEW: Common themes and key findings across the articles
+2. METHODOLOGY: Types of studies and research approaches used
+3. KEY FINDINGS: Most important results and conclusions
+4. CLINICAL RELEVANCE: Practical implications for healthcare/treatment
+5. RESEARCH GAPS: Areas that need further investigation
+
+Make the summary comprehensive but accessible to both researchers and clinicians.`
+  };
+
+  // ========== Global State and Configuration ==========
+  let config = {};
+  let searchState = {};
+  let abortController = null;
+
+  const resetSearchState = () => {
+    searchState = {
+      allArticles: {},
+      iterationsData: [],
+      finalRanking: [],
+      totalInputTokens: 0,
+      totalOutputTokens: 0
+    };
+  };
+
+  // CORS proxy configuration - with fallback options
+  const CORS_PROXIES = [
+    'https://corsproxy.io/?',
+    'https://api.codetabs.com/v1/proxy?quest=',
+    'https://proxy.cors.sh/',
+    'https://api.allorigins.win/raw?url='
+  ];
+  let currentProxyIndex = 0;
+  const NCBI_REQUEST_DELAY_MS = 400;
+  
+  // Detect if running locally
+  const isRunningLocally = window.location.protocol === 'file:';
+  if (isRunningLocally) {
+    console.warn('⚠️ Running locally detected. CORS proxies may not work properly.');
+    console.warn('Solutions:');
+    console.warn('1. Host on GitHub Pages (recommended)');
+    console.warn('2. Use local server: python -m http.server 8000');
+    console.warn('3. Upload to Netlify (drag & drop)');
+  }
+
+  // ========== Helper Functions for API Calls ==========
+  
+  // Enhanced API key validation
+  function validateAPIKey(key) {
+    if (!key || key.trim().length === 0) {
+      return { valid: false, message: "API key is empty" };
+    }
+    
+    // OpenAI API keys can have various prefixes now
+    const validPrefixes = ['sk-', 'sk-proj-'];
+    const hasValidPrefix = validPrefixes.some(prefix => key.startsWith(prefix));
+    
+    if (!hasValidPrefix && !key.includes('-')) {
+      return { valid: false, message: "API key format appears invalid" };
+    }
+    
+    return { valid: true, message: "API key format looks valid" };
+  }
+
+  // Test API key function
+  async function testAPIKey() {
+    const apiKey = document.getElementById("api-key").value.trim();
+    const resultDiv = document.getElementById("api-test-result");
+    
+    const validation = validateAPIKey(apiKey);
+    if (!validation.valid) {
+      resultDiv.innerHTML = `<div class="api-test-result api-test-failure">❌ ${validation.message}</div>`;
+      return;
+    }
+    
+    resultDiv.innerHTML = '<div class="api-test-result">Testing API key...</div>';
+    
+    try {
+      const response = await fetch("https://api.openai.com/v1/models", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`
+        }
+      });
+      
+      if (response.ok) {
+        resultDiv.innerHTML = '<div class="api-test-result api-test-success">✅ API key is valid and working!</div>';
+      } else {
+        const errorData = await response.json().catch(() => ({ error: { message: "Unknown error" } }));
+        resultDiv.innerHTML = `<div class="api-test-result api-test-failure">❌ API key invalid: ${errorData.error?.message || response.statusText}</div>`;
+      }
+    } catch (error) {
+      resultDiv.innerHTML = `<div class="api-test-result api-test-failure">❌ Connection error: ${error.message}</div>`;
+    }
+  }
+
+  // Enhanced OpenAI API call with better error handling
+  async function callOpenAI(prompt, temperature = 0.3, maxTokens = 1000) {
+    const requestBody = {
+      model: config.modelChoice,
+      messages: [{ role: "user", content: prompt }],
+      temperature: temperature,
+      max_tokens: maxTokens
+    };
+    
+    try {
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${config.openAIKey}`
+        },
+        body: JSON.stringify(requestBody),
+        signal: abortController?.signal
+      });
+      
+      const responseText = await response.text();
+      
+      if (!response.ok) {
+        let errorMessage = `OpenAI API Error: ${response.status} ${response.statusText}`;
+        try {
+          const errorData = JSON.parse(responseText);
+          if (errorData.error?.message) {
+            errorMessage = `OpenAI API Error: ${errorData.error.message}`;
+          }
+        } catch (e) {
+          // If response is not JSON, include the raw text
+          errorMessage += `\nResponse: ${responseText.substring(0, 200)}`;
+        }
+        throw new Error(errorMessage);
+      }
+      
+      const data = JSON.parse(responseText);
+      
+      if (!data.choices || data.choices.length === 0) {
+        throw new Error("No response from OpenAI API");
+      }
+      
+      let text = data.choices[0].message.content.trim();
+      
+      // Clean up JSON response
+      if (text.startsWith("```json")) {
+        text = text.replace(/^```json\s*/, "").replace(/```$/, "").trim();
+      } else if (text.startsWith("```")) {
+        text = text.replace(/^```\s*/, "").replace(/```$/, "").trim();
+      }
+      
+      // Update token usage
+      if (data.usage) {
+        searchState.totalInputTokens += data.usage.prompt_tokens || 0;
+        searchState.totalOutputTokens += data.usage.completion_tokens || 0;
+        updateTokenDisplay();
+      }
+      
+      return text;
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        logMessage("❌ OpenAI API call cancelled by user.\n");
+      } else {
+        logMessage(`❌ OpenAI API call failed: ${error.message}\n`);
+      }
+      throw error;
+    }
+  }
+
+  // Enhanced fetch with CORS proxy fallback
+  async function cancellableFetch(url, options = {}) {
+    let lastError;
+    
+    // If running locally, show warning with specific instructions
+    if (isRunningLocally && !window.corsWarningShown) {
+      logMessage("⚠️ WARNING: Running from local file detected. This causes CORS errors.\n");
+      logMessage("🔧 SOLUTIONS:\n");
+      logMessage("   1. Quick: Upload to GitHub Pages (free hosting)\n");
+      logMessage("   2. Instant: Drag file to netlify.com\n");
+      logMessage("   3. Local: Run 'python -m http.server 8000' in file directory\n");
+      logMessage("   4. VS Code: Use Live Server extension\n\n");
+      window.corsWarningShown = true;
+    }
+    
+    // Try direct fetch first (in case no proxy is needed)
+    if (!url.includes('ncbi.nlm.nih.gov')) {
+      try {
+        const response = await fetch(url, { ...options, signal: abortController?.signal });
+        if (response.ok) return response;
+      } catch (e) {
+        // Continue to proxy attempts
+      }
+    }
+    
+    // Try each proxy
+    for (let i = 0; i < CORS_PROXIES.length; i++) {
+      const proxyIndex = (currentProxyIndex + i) % CORS_PROXIES.length;
+      const proxy = CORS_PROXIES[proxyIndex];
+      const proxiedUrl = proxy + encodeURIComponent(url);
+      
+      try {
+        const response = await fetch(proxiedUrl, { ...options, signal: abortController?.signal });
+        if (response.ok) {
+          currentProxyIndex = proxyIndex; // Remember working proxy
+          if (i > 0) {
+            console.log(`✓ CORS proxy ${proxy} worked after ${i} failed attempts`);
+          }
+          return response;
+        }
+        lastError = new Error(`Proxy ${proxy} returned status ${response.status}`);
+      } catch (error) {
+        lastError = error;
+        if (error.name === 'AbortError') {
+          throw error; // Don't retry on abort
+        }
+        console.warn(`CORS proxy ${proxy} failed:`, error.message);
+      }
+    }
+    
+    // All proxies failed
+    logMessage(`❌ All CORS proxies failed. ${isRunningLocally ? 'Please host this file online.' : 'Try again later.'}\n`);
+    throw lastError || new Error('All CORS proxies failed');
+  }
+
+  // PubMed search with better error handling
+  async function searchPubMed(query, maxResults = 20) {
+    const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(query)}&retmode=xml&retmax=${maxResults}&tool=AI_PubMed_Searcher&email=research.tool@example.com`;
+    
+    try {
+      const resp = await cancellableFetch(url);
+      if (!resp.ok) throw new Error(`PubMed search error: ${resp.status}`);
+      
+      const xmlText = await resp.text();
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+      
+      // Check for errors in XML
+      const errorNode = xmlDoc.querySelector("ERROR");
+      if (errorNode) {
+        throw new Error(`PubMed API error: ${errorNode.textContent}`);
+      }
+      
+      const idElements = Array.from(xmlDoc.getElementsByTagName("Id"));
+      return idElements.map(idNode => idNode.textContent);
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        logMessage(`❌ PubMed search API error: ${error.message}\n`);
+      }
+      return [];
+    }
+  }
+
+  // Fetch PubMed article details
+  async function fetchPubMedDetails(pmids) {
+    if (pmids.length === 0) return [];
+    
+    const BATCH_SIZE = 100;
+    let articles = [];
+    
+    for (let i = 0; i < pmids.length; i += BATCH_SIZE) {
+      const batchIds = pmids.slice(i, i + BATCH_SIZE).join(",");
+      const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${batchIds}&retmode=xml&tool=AI_PubMed_Searcher&email=research.tool@example.com`;
+      
+      try {
+        const resp = await cancellableFetch(url);
+        if (!resp.ok) throw new Error(`PubMed fetch error: ${resp.status}`);
+        
+        const xmlText = await resp.text();
+        const xmlDoc = new DOMParser().parseFromString(xmlText, "text/xml");
+        const articleNodes = Array.from(xmlDoc.getElementsByTagName("PubmedArticle"));
+        
+        articles.push(...articleNodes.map(parseArticleXML));
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          logMessage(`⚠️ PubMed fetch error for batch: ${error.message}\n`);
+        }
+      }
+    }
+    
+    return articles;
+  }
+
+  // Parse article XML
+  function parseArticleXML(articleNode) {
+    function textOrDefault(elem, tag, defaultVal = "") {
+      const node = elem.getElementsByTagName(tag)[0];
+      return node && node.textContent ? node.textContent : defaultVal;
+    }
+    
+    const pmid = textOrDefault(articleNode, "PMID", "Unknown");
+    const title = textOrDefault(articleNode, "ArticleTitle", "No Title Available");
+    
+    const authors = Array.from(articleNode.getElementsByTagName("Author")).map(auth => {
+      const lastName = textOrDefault(auth, "LastName");
+      const foreName = textOrDefault(auth, "ForeName");
+      return lastName ? (foreName ? `${lastName}, ${foreName}` : lastName) : null;
+    }).filter(Boolean);
+    
+    const journal = textOrDefault(articleNode, "Title", "Unknown Journal");
+    
+    const pubDateNode = articleNode.getElementsByTagName("PubDate")[0];
+    let pubYear = "Unknown";
+    if (pubDateNode) {
+      const year = textOrDefault(pubDateNode, "Year");
+      const medlineDate = textOrDefault(pubDateNode, "MedlineDate");
+      pubYear = year || (medlineDate ? medlineDate.substring(0, 4) : "Unknown");
+    }
+    
+    const abstract = Array.from(articleNode.getElementsByTagName("AbstractText"))
+      .map(node => {
+        const label = node.getAttribute("Label");
+        return (label ? label + ": " : "") + node.textContent;
+      })
+      .join(" ")
+      .trim();
+    
+    return {
+      pmid,
+      title,
+      authors,
+      journal,
+      pub_date: pubYear,
+      abstract,
+      relevance_score: 0,
+      ai_reasoning: "",
+      found_in_iteration: 0
+    };
+  }
+
+  // MeSH term verification
+  async function verifyMeshTerm(term) {
+    const url = `https://id.nlm.nih.gov/mesh/lookup/descriptor?label=${encodeURIComponent(term)}&match=exact&limit=1`;
+    
+    try {
+      const resp = await cancellableFetch(url);
+      if (!resp.ok) return false;
+      
+      const data = await resp.json();
+      return Array.isArray(data) && data.length > 0 && data[0].label === term;
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.warn("MeSH verification API error:", error);
+      }
+      return false;
+    }
+  }
+
+  // Logging function
+  function logMessage(message, isHtml = false) {
+    const logArea = document.getElementById("iteration-log");
+    if (isHtml) {
+      logArea.innerHTML += message;
+    } else {
+      logArea.textContent += message;
+    }
+    logArea.scrollTop = logArea.scrollHeight;
+  }
+
+  // Update token display
+  function updateTokenDisplay() {
+    const pricing = {
+      "gpt-4-turbo": { input: 0.01, output: 0.03 },
+      "gpt-4": { input: 0.03, output: 0.06 },
+      "gpt-3.5-turbo": { input: 0.0005, output: 0.0015 }
+    };
+    
+    const modelPricing = pricing[config.modelChoice] || pricing["gpt-4-turbo"];
+    const cost = (searchState.totalInputTokens / 1000 * modelPricing.input) + 
+                 (searchState.totalOutputTokens / 1000 * modelPricing.output);
+    
+    document.getElementById("progress-status").textContent = 
+      `Tokens - In: ${searchState.totalInputTokens}, Out: ${searchState.totalOutputTokens}, Est. Cost: $${cost.toFixed(4)}`;
+  }
+
+  // Get search terms with AI
+  async function getSearchTerms(iter, query) {
+    let prompt;
+    
+    if (iter === 1) {
+      prompt = PromptTemplates.INITIAL_SEARCH_TERMS.replace("{query}", query);
+    } else {
+      let context = `Original query: ${query}\n\n`;
+      searchState.iterationsData.slice(-2).forEach(it => {
+        context += `Iteration ${it.number} Summary:\n`;
+        context += `- Search Terms: ${JSON.stringify(it.searchTerms)}\n`;
+        context += `- Lessons: ${it.lessons}\n`;
+        context += `- Next Strategy: ${it.nextStrategy}\n\n`;
+      });
+      prompt = PromptTemplates.REFINED_SEARCH_TERMS.replace("{context}", context);
+    }
+    
+    try {
+      const responseText = await callOpenAI(prompt, iter === 1 ? 0.3 : 0.4, 600);
+      return JSON.parse(responseText);
+    } catch (e) {
+      logMessage(`⚠️ AI failed to generate search terms. Reason: ${e.message}. Using a fallback.\n`);
+      return [query.split(" ").join(" AND ")];
+    }
+  }
+
+  // Analyze articles with AI
+  async function analyzeArticlesWithAI(query, articlesList) {
+    if (articlesList.length === 0) return [];
+    
+    logMessage("🤖 Analyzing articles with AI for relevance...\n");
+    
+    const articleInfo = articlesList.map((a, i) => ({
+      index: i + 1,
+      pmid: a.pmid,
+      title: a.title,
+      abstract: (a.abstract || "").substring(0, 800) + (a.abstract?.length > 800 ? "..." : "")
+    }));
+    
+    const prompt = PromptTemplates.ARTICLE_ANALYSIS
+      .replace("{query}", query)
+      .replace("{articles}", JSON.stringify(articleInfo, null, 2));
+    
+    try {
+      const responseText = await callOpenAI(prompt, 0.2, 1500);
+      const results = JSON.parse(responseText);
+      
+      results.forEach(res => {
+        if (articlesList[res.index - 1]) {
+          articlesList[res.index - 1].relevance_score = res.score || 0;
+          articlesList[res.index - 1].ai_reasoning = res.reasoning || "No reasoning provided.";
+        }
+      });
+    } catch (e) {
+      logMessage(`⚠️ AI analysis of articles failed. Reason: ${e.message}. Assigning neutral scores.\n`);
+      articlesList.forEach(a => {
+        a.relevance_score = 50;
+        a.ai_reasoning = "AI analysis failed.";
+      });
+    }
+    
+    return articlesList;
+  }
+
+  // Get iteration insights
+  async function getIterationInsights(query, iter, searchTerms, topArticles) {
+    const summary = topArticles.map((a, i) => 
+      `${a.title} (Score: ${a.relevance_score.toFixed(0)})`
+    ).join("\n");
+    
+    const prompt = PromptTemplates.ITERATION_INSIGHTS
+      .replace("{query}", query)
+      .replace("{iteration}", iter)
+      .replace("{search_terms}", JSON.stringify(searchTerms))
+      .replace("{articles_summary}", summary);
+    
+    try {
+      const responseText = await callOpenAI(prompt, 0.3, 500);
+      
+      const analysis = responseText.match(/ANALYSIS:([\s\S]*?)LESSONS LEARNED:/)?.[1]?.trim() || "N/A";
+      const lessons = responseText.match(/LESSONS LEARNED:([\s\S]*?)NEXT STRATEGY:/)?.[1]?.trim() || "N/A";
+      const nextStrategy = responseText.match(/NEXT STRATEGY:([\s\S]*)/)?.[1]?.trim() || "N/A";
+      
+      return { analysis, lessons, nextStrategy };
+    } catch (e) {
+      logMessage(`⚠️ AI insights generation failed. Reason: ${e.message}.\n`);
+      return {
+        analysis: "N/A",
+        lessons: "N/A",
+        nextStrategy: "Continue with refined query."
+      };
+    }
+  }
+
+  // Main search function
+  async function runIterativeSearch(query) {
+    toggleUI(true);
+    resetSearchState();
+    abortController = new AbortController();
+    
+    // Clear all display areas
+    document.getElementById("iteration-log").textContent = "";
+    ['results', 'summary', 'evolution', 'rankings'].forEach(id => {
+      document.getElementById(id).textContent = "";
+    });
+    
+    logMessage(`🚀 Starting search for: "${query}"...\n`);
+    logMessage("=================================================================\n");
+    
+    try {
+      for (let iter = 1; iter <= config.totalIterations; iter++) {
+        if (abortController.signal.aborted) {
+          throw new Error("Search cancelled");
+        }
+        
+        logMessage(`\n🔄 ITERATION ${iter}/${config.totalIterations}\n`);
+        logMessage("------------------------------------------\n");
+        
+        // Get search terms
+        const searchTerms = await getSearchTerms(iter, query);
+        
+        // Verify MeSH terms
+        const meshPattern = /\[([^\]]+)\]/g;
+        const uniqueMeshTerms = [...new Set(
+          Array.from(JSON.stringify(searchTerms).matchAll(meshPattern), m => m[1])
+        )];
+        
+        logMessage("Verifying MeSH terms...\n");
+        const invalidTerms = new Set();
+        
+        for (const term of uniqueMeshTerms) {
+          const isValid = await verifyMeshTerm(term);
+          if (!isValid) invalidTerms.add(term);
+          await new Promise(resolve => setTimeout(resolve, NCBI_REQUEST_DELAY_MS));
+        }
+        
+        // Display search strategies
+        logMessage("Search strategies (invalid MeSH highlighted):\n");
+        searchTerms.forEach((s, i) => {
+          let highlighted = s.replace(meshPattern, (match, term) => 
+            invalidTerms.has(term) ? `<span class="invalid-mesh">${match}</span>` : match
+          );
+          logMessage(`  ${i + 1}. ${highlighted}<br>`, true);
+        });
+        
+        // Search PubMed
+        logMessage("\nSearching PubMed...\n");
+        const perTermCount = Math.ceil(config.articlesPerIteration / searchTerms.length) + 5;
+        let pmidArrays = [];
+        
+        for (const term of searchTerms) {
+          const pmids = await searchPubMed(term, perTermCount);
+          pmidArrays.push(pmids);
+          await new Promise(resolve => setTimeout(resolve, NCBI_REQUEST_DELAY_MS));
+        }
+        
+        // Process unique PMIDs
+        const uniquePmids = [...new Set(pmidArrays.flat())];
+        
+        if (uniquePmids.length === 0) {
+          logMessage("⚠️ No new articles found this iteration. Continuing...\n");
+          continue;
+        }
+        
+        logMessage(`📊 Found ${uniquePmids.length} unique articles in iteration ${iter}.\n`);
+        
+        // Fetch new articles
+        const newPmids = uniquePmids.filter(pmid => !searchState.allArticles[pmid]);
+        
+        if (newPmids.length > 0) {
+          const newArticles = await fetchPubMedDetails(newPmids);
+          newArticles.forEach(article => {
+            article.found_in_iteration = iter;
+            searchState.allArticles[article.pmid] = article;
+          });
+        }
+        
+        // Analyze articles
+        const currentArticles = uniquePmids
+          .map(pmid => searchState.allArticles[pmid])
+          .filter(Boolean);
+        
+        const analyzedArticles = await analyzeArticlesWithAI(query, currentArticles);
+        analyzedArticles.sort((a, b) => b.relevance_score - a.relevance_score);
+        
+        const topArticles = analyzedArticles.slice(0, config.topArticlesPerIteration);
+        
+        // Get insights
+        const insights = await getIterationInsights(query, iter, searchTerms, topArticles);
+        
+        logMessage(`\n💡 Lessons learned: ${insights.lessons}\n`);
+        logMessage(`📍 Next strategy: ${insights.nextStrategy}\n`);
+        
+        searchState.iterationsData.push({
+          number: iter,
+          searchTerms,
+          topArticles,
+          ...insights
+        });
+      }
+      
+      logMessage("\n🎯 All iterations completed. Finalizing results...\n");
+      await finalizeAndDisplayResults(query);
+      
+    } catch (error) {
+      if (error.name === 'AbortError' || error.message === 'Search cancelled') {
+        document.getElementById("progress-status").textContent = "❌ Search cancelled.";
+        logMessage("\n\nExecution was halted by user cancellation.\n");
+      } else {
+        document.getElementById("progress-status").textContent = "❌ An error occurred.";
+        logMessage(`\n\nSearch stopped due to an error: ${error.message}\n`);
+      }
+    } finally {
+      toggleUI(false);
+    }
+  }
+
+  // Finalize and display results
+  async function finalizeAndDisplayResults(query) {
+    const allUniqueArticles = Object.values(searchState.allArticles);
+    
+    if (allUniqueArticles.length === 0) {
+      logMessage("⚠️ No articles found to rank.\n");
+      return;
+    }
+    
+    logMessage(`\n🎯 Performing final ranking of ${allUniqueArticles.length} articles...\n`);
+    
+    // Prepare article summary for ranking
+    const articleSummary = allUniqueArticles.map((a, i) => ({
+      number: i + 1,
+      pmid: a.pmid,
+      title: a.title,
+      relevance_score: a.relevance_score,
+      found_in_iteration: a.found_in_iteration
+    }));
+    
+    const prompt = PromptTemplates.FINAL_RANKING
+      .replace("{query}", query)
+      .replace("{articles}", JSON.stringify(articleSummary, null, 2))
+      .replace("{count}", allUniqueArticles.length);
+    
+    try {
+      const responseText = await callOpenAI(prompt, 0.2, 800);
+      const rankingIndices = JSON.parse(responseText);
+      
+      searchState.finalRanking = rankingIndices
+        .map(idx => allUniqueArticles[idx - 1])
+        .filter(Boolean);
+      
+    } catch (e) {
+      logMessage(`⚠️ AI final ranking failed. Using relevance scores. Error: ${e.message}\n`);
+      searchState.finalRanking = [...allUniqueArticles].sort((a, b) => b.relevance_score - a.relevance_score);
+    }
+    
+    displayFinalResults();
+    
+    // Generate search evolution summary
+    logMessage("\n📝 Generating search evolution summary...\n");
+    
+    const summaryData = {
+      total_iterations: searchState.iterationsData.length,
+      total_articles_found: searchState.finalRanking.length,
+      iterations: searchState.iterationsData.map(it => ({
+        number: it.number,
+        search_terms: it.searchTerms,
+        top_score: it.topArticles[0]?.relevance_score || 0,
+        lessons: it.lessons
+      }))
+    };
+    
+    const summaryPrompt = PromptTemplates.SEARCH_SUMMARY
+      .replace("{summary_data}", JSON.stringify(summaryData, null, 2));
+    
+    try {
+      const summaryResponse = await callOpenAI(summaryPrompt, 0.3, 600);
+      document.getElementById("evolution").textContent += `\n\nSEARCH EVOLUTION SUMMARY:\n${summaryResponse}`;
+    } catch (e) {
+      console.error("Summary generation failed:", e);
+    }
+    
+    document.getElementById("progress-status").textContent = "✅ Search completed!";
+  }
+
+  // Display final results
+  function displayFinalResults() {
+    const { finalRanking, iterationsData } = searchState;
+    const resultsDiv = document.getElementById("results");
+    
+    // Display top 5 articles with full details
+    resultsDiv.innerHTML = finalRanking.slice(0, 5).map((a, i) => `
+      <p>
+        <b>#${i + 1}: ${escapeHtml(a.title)}</b><br>
+        <small>
+          Authors: ${a.authors.slice(0, 3).join(", ")}${a.authors.length > 3 ? " et al." : ""}<br>
+          Journal: ${escapeHtml(a.journal)} (${a.pub_date}) | PMID: ${a.pmid} | Score: ${a.relevance_score.toFixed(1)}/100<br>
+          URL: <a href="https://pubmed.ncbi.nlm.nih.gov/${a.pmid}/" target="_blank">https://pubmed.ncbi.nlm.nih.gov/${a.pmid}/</a><br>
+          AI Reasoning: ${escapeHtml(a.ai_reasoning)}<br>
+          <i>Abstract: ${escapeHtml(a.abstract || "N/A")}</i>
+        </small>
+      </p>
+    `).join('<hr>');
+    
+    // Display evolution overview
+    let evolutionText = `Found ${finalRanking.length} unique articles over ${iterationsData.length} iterations.\n\n`;
+    iterationsData.forEach(it => {
+      evolutionText += `Iter ${it.number}: Used ${it.searchTerms.length} strategies. `;
+      evolutionText += `Best article score: ${it.topArticles[0]?.relevance_score.toFixed(1) || 'N/A'}.\n`;
+    });
+    document.getElementById("evolution").textContent = evolutionText;
+    
+    // Display complete rankings
+    const rankDiv = document.getElementById("rankings");
+    rankDiv.innerHTML = finalRanking.map((a, i) => `
+      <p>
+        ${i + 1}. ${escapeHtml(a.title)} <br>
+        <small>PMID: ${a.pmid} | Score: ${a.relevance_score.toFixed(1)} | Found in Iter: ${a.found_in_iteration}</small>
+      </p>
+    `).join('');
+  }
+
+  // HTML escape function
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Toggle UI during search
+  function toggleUI(isSearching) {
+    document.getElementById("start-btn").disabled = isSearching;
+    document.getElementById("start-btn").style.display = isSearching ? 'none' : 'inline-block';
+    document.getElementById("cancel-btn").style.display = isSearching ? 'inline-block' : 'none';
+    
+    const disableElements = [
+      "#config-section input",
+      "#config-section select",
+      "#query-section input",
+      "#query-section select"
+    ];
+    
+    disableElements.forEach(selector => {
+      document.querySelectorAll(selector).forEach(el => {
+        el.disabled = isSearching;
+      });
+    });
+    
+    // Don't disable the test API button
+    document.getElementById("test-api-btn").disabled = false;
+  }
+
+  // Generate abstract summary
+  async function generateAbstractSummary() {
+    if (!searchState.finalRanking || searchState.finalRanking.length === 0) {
+      document.getElementById("summary").textContent = "No results available to summarize.";
+      return;
+    }
+    
+    const count = parseInt(document.getElementById("summary-count").value, 10) || 5;
+    const topN = searchState.finalRanking.slice(0, count);
+    
+    let abstractsText = "";
+    topN.forEach((article, i) => {
+      abstractsText += `\n${i + 1}. ${article.title}\n`;
+      abstractsText += `   Abstract: ${article.abstract || "Not available"}\n`;
+      abstractsText += "-".repeat(80) + "\n";
+    });
+    
+    const summaryPrompt = PromptTemplates.ABSTRACT_SUMMARY
+      .replace("{abstracts}", abstractsText);
+    
+    const summaryDiv = document.getElementById("summary");
+    summaryDiv.textContent = "Generating summary, please wait...";
+    
+    try {
+      const summaryResponse = await callOpenAI(summaryPrompt, 0.3, 1000);
+      summaryDiv.textContent = `AI SUMMARY OF TOP ${count} ARTICLES:\n`;
+      summaryDiv.textContent += "================================================\n";
+      summaryDiv.textContent += summaryResponse;
+    } catch (e) {
+      summaryDiv.textContent = `❌ Error generating summary: ${e.message}`;
+    }
+  }
+
+  // ========== Event Listeners ==========
+  
+  // Test API button
+  document.getElementById("test-api-btn").addEventListener("click", testAPIKey);
+  
+  // Start button
+  document.getElementById("start-btn").addEventListener("click", () => {
+    config = {
+      openAIKey: document.getElementById("api-key").value.trim(),
+      modelChoice: document.getElementById("model-select").value,
+      totalIterations: parseInt(document.getElementById("iterations").value, 10),
+      articlesPerIteration: parseInt(document.getElementById("articles-per-iter").value, 10),
+      topArticlesPerIteration: parseInt(document.getElementById("top-articles").value, 10)
+    };
+    
+    const query = document.getElementById("query-input").value.trim();
+    
+    // Validate API key
+    const validation = validateAPIKey(config.openAIKey);
+    if (!validation.valid) {
+      alert(`Invalid API key: ${validation.message}\n\nPlease enter a valid OpenAI API key.`);
+      return;
+    }
+    
+    if (!query) {
+      alert("Please enter a research query.");
+      return;
+    }
+    
+    runIterativeSearch(query);
+  });
+  
+  // Cancel button
+  document.getElementById("cancel-btn").addEventListener("click", () => {
+    if (abortController) {
+      abortController.abort();
+      logMessage("\n\n🛑 User initiated cancellation...\n");
+    }
+  });
+  
+  // Summary button
+  document.getElementById("summary-btn").addEventListener("click", generateAbstractSummary);
+  
+  // Auto-focus on query input when page loads
+  window.addEventListener('load', () => {
+    document.getElementById("query-input").focus();
+    
+    // Check if running locally and show warning
+    if (window.location.protocol === 'file:') {
+      document.getElementById('cors-warning').style.display = 'block';
+    }
+  });
+</script>
+</body>
+</html>
