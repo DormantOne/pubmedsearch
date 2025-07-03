@@ -570,10 +570,19 @@ Create 5 search strategies:
 Use proper PubMed syntax ([tiab], [MeSH], AND, OR, parentheses).
 Keep searches simple and effective - avoid long phrases.
 
+YOU MUST FORMAT YOUR RESPONSE EXACTLY LIKE THIS:
+1. BROAD: [[term1 AND term2 AND term3]]
+2. FOCUSED: [[specific_term[tiab] AND "exact phrase" AND term]]
+3. MESH-HEAVY: [["MeSH Term 1"[MeSH] AND "MeSH Term 2"[MeSH]]]
+4. SYNONYM-BASED: [[(term1 OR synonym1) AND (term2 OR synonym2)]]
+5. METHODOLOGICAL: [[method_term AND experimental AND model]]
+
 Example response:
-1. [[metformin[tiab] AND diabetes AND prevention]]
-2. [["diabetes prevention"[tiab] AND prediabetic AND treatment]]
-3. [["Metformin"[MeSH] AND "Diabetes Mellitus"[MeSH]]]
+1. BROAD: [[metformin AND diabetes AND prevention]]
+2. FOCUSED: [["diabetes prevention"[tiab] AND prediabetic AND treatment]]
+3. MESH-HEAVY: [["Metformin"[MeSH] AND "Diabetes Mellitus"[MeSH]]]
+4. SYNONYM-BASED: [[(metformin OR biguanide) AND (diabetes OR "type 2 diabetes")]]
+5. METHODOLOGICAL: [[clinical trial AND randomized AND glucose control]]
 
 Generate 5 searches:</textarea>
         </div>
@@ -860,11 +869,43 @@ Keep it comprehensive yet accessible.`
       state.currentTab = tabName;
     }
 
-    // Parse bracketed terms from AI response
+    // Parse bracketed terms from AI response - with better fallback
     function parseBracketedTerms(text) {
+      // First try to find [[term]] format
       const matches = text.match(/\[\[([^\]]+)\]\]/g);
-      if (!matches) return [];
-      return matches.map(match => match.replace(/\[\[|\]\]/g, '').trim());
+      if (matches && matches.length > 0) {
+        return matches.map(match => match.replace(/\[\[|\]\]/g, '').trim());
+      }
+      
+      // Fallback: Look for numbered lists
+      const lines = text.split('\n');
+      const searches = [];
+      
+      for (const line of lines) {
+        // Match patterns like "1. search term" or "BROAD: search term"
+        const numbered = line.match(/^\d+\.\s*(.+)/);
+        const labeled = line.match(/^(?:BROAD|FOCUSED|MESH-HEAVY|SYNONYM-BASED|METHODOLOGICAL):\s*(.+)/i);
+        
+        if (numbered) {
+          searches.push(numbered[1].trim());
+        } else if (labeled) {
+          searches.push(labeled[1].trim());
+        }
+      }
+      
+      // If still nothing found, try to extract any line that looks like a search
+      if (searches.length === 0) {
+        for (const line of lines) {
+          const trimmed = line.trim();
+          // Check if line contains AND, OR, or PubMed syntax
+          if (trimmed && (trimmed.includes(' AND ') || trimmed.includes(' OR ') || 
+              trimmed.includes('[') || trimmed.includes('"'))) {
+            searches.push(trimmed);
+          }
+        }
+      }
+      
+      return searches;
     }
 
     // Enhanced logging
@@ -1127,38 +1168,55 @@ Keep it comprehensive yet accessible.`
     // Generate initial search terms
     async function generateInitialSearchTerms(query) {
       logMessage("\n🔍 Generating initial search strategies...\n");
+      logMessage("   Strategy: Starting broad, then focusing on specific aspects\n");
       
       const prompt = getPrompt('INITIAL_SEARCH').replace("{query}", query);
       
       try {
         const response = await callOpenAI(prompt, 0.3, 600);
+        
+        // Log the AI's response for transparency
+        logMessage("\n📝 AI Response:\n");
+        logMessage("---\n" + response + "\n---\n\n");
+        
         const searches = parseBracketedTerms(response);
         
         if (searches.length === 0) {
-          // Fallback: try to extract searches differently
-          const lines = response.split('\n').filter(line => line.match(/^\d+\./));
-          return lines.map(line => line.replace(/^\d+\.\s*/, '').trim());
+          throw new Error("No valid search terms extracted from AI response");
         }
         
         return searches;
       } catch (e) {
         logMessage(`⚠️ Failed to generate searches: ${e.message}\n`);
-        // Simple fallback
+        logMessage("   Using fallback search strategy...\n");
+        
+        // Better fallback: create meaningful searches
+        const terms = query.match(/\b\w+\b/g) || [];
+        const keyTerms = terms.filter(t => t.length > 3 && !['and', 'the', 'for', 'with', 'show'].includes(t.toLowerCase()));
+        
         return [
-          `${query.split(' ').join(' AND ')}`,
-          `${query.split(' ').join(' OR ')}`,
-          query
-        ];
+          // Broad: all key terms with AND
+          keyTerms.join(' AND '),
+          // Focused: first few key terms
+          keyTerms.slice(0, 3).join(' AND '),
+          // With wildcards
+          keyTerms.slice(0, 2).map(t => t + '*').join(' AND '),
+          // Alternative: key terms in title/abstract
+          keyTerms.slice(0, 2).map(t => t + '[tiab]').join(' AND '),
+          // Just the main terms
+          keyTerms.slice(0, 2).join(' ')
+        ].filter(s => s.length > 0).slice(0, 5);
       }
     }
 
     // Generate refined search terms
     async function generateRefinedSearchTerms(query, iteration) {
       logMessage("\n🔄 Generating refined search strategies...\n");
+      logMessage("   Strategy: Learning from successful searches and avoiding failures\n");
       
       // Build context from history
       const context = buildSearchContext();
-      const successfulTerms = Array.from(state.searchState.successfulTerms).join(", ");
+      const successfulTerms = Array.from(state.searchState.successfulTerms).slice(0, 5).join(", ");
       const failedSearches = state.searchState.failedSearches.slice(-5).join("; ");
       
       const prompt = getPrompt('REFINED_SEARCH')
@@ -1169,10 +1227,49 @@ Keep it comprehensive yet accessible.`
       
       try {
         const response = await callOpenAI(prompt, 0.4, 600);
-        return parseBracketedTerms(response);
+        
+        // Log the AI's response
+        logMessage("\n📝 AI Refined Response:\n");
+        logMessage("---\n" + response + "\n---\n\n");
+        
+        const searches = parseBracketedTerms(response);
+        
+        if (searches.length === 0) {
+          throw new Error("No valid search terms extracted");
+        }
+        
+        return searches;
       } catch (e) {
         logMessage(`⚠️ Failed to refine searches: ${e.message}\n`);
-        return generateInitialSearchTerms(query); // Fallback
+        logMessage("   Using alternative search strategy...\n");
+        
+        // Better fallback for refined searches
+        const terms = query.match(/\b\w+\b/g) || [];
+        const keyTerms = terms.filter(t => t.length > 3 && !['and', 'the', 'for', 'with', 'show'].includes(t.toLowerCase()));
+        
+        // Try variations based on what we've learned
+        const refinedSearches = [];
+        
+        // If we have successful terms, modify them slightly
+        if (state.searchState.successfulTerms.size > 0) {
+          const successful = Array.from(state.searchState.successfulTerms);
+          successful.slice(0, 2).forEach(term => {
+            // Add wildcards to successful terms
+            refinedSearches.push(term.replace(/(\w{4,})/g, '$1*'));
+          });
+        }
+        
+        // Add new combinations
+        refinedSearches.push(
+          // Try with field tags
+          keyTerms.slice(0, 3).map(t => t + '[tiab]').join(' AND '),
+          // Try with fewer terms
+          keyTerms.slice(0, 2).join(' AND '),
+          // Try with "OR" for flexibility
+          `(${keyTerms[0]} OR ${keyTerms[1]}) AND ${keyTerms[2] || keyTerms[1]}`
+        );
+        
+        return refinedSearches.filter(s => s && s.length > 0).slice(0, 5);
       }
     }
 
@@ -1242,37 +1339,49 @@ Keep it comprehensive yet accessible.`
     async function displaySearchTerms(searchTerms, iteration) {
       logMessage(`\n📋 Search strategies for iteration ${iteration}:\n`);
       
+      // Add labels for clarity
+      const labels = ['BROAD', 'FOCUSED', 'MESH-HEAVY', 'SYNONYM-BASED', 'METHODOLOGICAL'];
+      
       for (let i = 0; i < searchTerms.length; i++) {
         const term = searchTerms[i];
-        let displayTerm = term;
+        const label = labels[i] || `Strategy ${i + 1}`;
+        
+        // Start with the label
+        let displayLine = `${i + 1}. ${label}: `;
         
         // Extract and validate MeSH terms if enabled
         if (document.getElementById('validate-mesh').checked) {
-          const meshMatches = term.match(/\[MeSH\]/g);
-          if (meshMatches) {
-            const meshTerms = term.match(/["']([^"']+)["']\[MeSH\]/g);
-            if (meshTerms) {
-              for (const meshMatch of meshTerms) {
-                const meshTerm = meshMatch.match(/["']([^"']+)["']/)[1];
-                const isValid = await validateMeshTerm(meshTerm);
-                
-                if (document.getElementById('show-mesh-feedback').checked) {
-                  const className = isValid ? 'mesh-valid' : 'mesh-invalid';
-                  const status = isValid ? '✓' : '✗';
-                  displayTerm = displayTerm.replace(
-                    meshMatch,
-                    `<span class="${className}">${meshMatch} ${status}</span>`
-                  );
-                }
-                
-                await new Promise(resolve => setTimeout(resolve, 100)); // Rate limit
+          const meshMatches = [...term.matchAll(/"([^"]+)"\[MeSH\]/g)];
+          let validatedTerm = term;
+          
+          if (meshMatches.length > 0) {
+            for (const match of meshMatches) {
+              const meshTerm = match[1];
+              const isValid = await validateMeshTerm(meshTerm);
+              
+              if (document.getElementById('show-mesh-feedback').checked) {
+                const status = isValid ? 
+                  '<span class="mesh-valid">✓</span>' : 
+                  '<span class="mesh-invalid">✗</span>';
+                validatedTerm = validatedTerm.replace(
+                  match[0],
+                  match[0] + ' ' + status
+                );
               }
+              
+              await new Promise(resolve => setTimeout(resolve, 50));
             }
           }
+          
+          displayLine += validatedTerm;
+        } else {
+          displayLine += term;
         }
         
-        logMessage(`<div class="search-term">${i + 1}. ${displayTerm}</div>`, true);
+        logMessage(`<div class="search-term">${displayLine}</div>`, true);
       }
+      
+      logMessage("\n");
     }
 
     // Main search function
@@ -1298,6 +1407,7 @@ Keep it comprehensive yet accessible.`
         
         // Main iteration loop
         for (let iter = 1; iter <= state.config.totalIterations; iter++) {
+          // Check for cancellation
           if (state.abortController.signal.aborted) {
             throw new Error("Search cancelled");
           }
@@ -1307,9 +1417,25 @@ Keep it comprehensive yet accessible.`
           logMessage(`${"=".repeat(60)}\n`);
           
           // Generate search terms
-          const searchTerms = iter === 1 
-            ? await generateInitialSearchTerms(query)
-            : await generateRefinedSearchTerms(query, iter);
+          let searchTerms;
+          try {
+            searchTerms = iter === 1 
+              ? await generateInitialSearchTerms(query)
+              : await generateRefinedSearchTerms(query, iter);
+          } catch (error) {
+            if (error.name === 'AbortError') {
+              throw new Error("Search cancelled");
+            }
+            // If generation fails, try fallback
+            logMessage(`⚠️ Search generation error: ${error.message}\n`);
+            searchTerms = await generateInitialSearchTerms(query);
+          }
+          
+          // Ensure we have valid search terms
+          if (!searchTerms || searchTerms.length === 0) {
+            logMessage("❌ No search terms generated. Skipping iteration.\n");
+            continue;
+          }
           
           // Display and validate search terms
           await displaySearchTerms(searchTerms, iter);
@@ -1323,17 +1449,23 @@ Keep it comprehensive yet accessible.`
             const term = searchTerms[i];
             logMessage(`  Search ${i + 1}: `);
             
-            const pmids = await searchPubMed(term, articlesPerSearch + 5);
-            allPmids.push(...pmids);
-            
-            if (pmids.length > 0) {
-              logMessage(`✅ Found ${pmids.length} articles\n`);
-              state.searchState.successfulTerms.add(term);
-            } else {
-              logMessage(`❌ No results\n`);
+            try {
+              const pmids = await searchPubMed(term, articlesPerSearch + 5);
+              allPmids.push(...pmids);
+              
+              if (pmids.length > 0) {
+                logMessage(`✅ Found ${pmids.length} articles\n`);
+                state.searchState.successfulTerms.add(term);
+              } else {
+                logMessage(`❌ No results\n`);
+                state.searchState.failedSearches.push(term);
+              }
+            } catch (searchError) {
+              logMessage(`❌ Error: ${searchError.message}\n`);
               state.searchState.failedSearches.push(term);
             }
             
+            // Rate limiting
             await new Promise(resolve => 
               setTimeout(resolve, parseInt(document.getElementById('rate-limit').value))
             );
@@ -1352,12 +1484,16 @@ Keep it comprehensive yet accessible.`
           const newPmids = uniquePmids.filter(pmid => !state.searchState.allArticles[pmid]);
           if (newPmids.length > 0) {
             logMessage(`📥 Fetching details for ${newPmids.length} new articles...\n`);
-            const newArticles = await fetchPubMedDetails(newPmids);
-            
-            newArticles.forEach(article => {
-              article.found_in_iteration = iter;
-              state.searchState.allArticles[article.pmid] = article;
-            });
+            try {
+              const newArticles = await fetchPubMedDetails(newPmids);
+              
+              newArticles.forEach(article => {
+                article.found_in_iteration = iter;
+                state.searchState.allArticles[article.pmid] = article;
+              });
+            } catch (fetchError) {
+              logMessage(`❌ Error fetching article details: ${fetchError.message}\n`);
+            }
           }
           
           // Get current iteration's articles
@@ -1376,11 +1512,12 @@ Keep it comprehensive yet accessible.`
           displayIterationResults(iter, topArticles);
           
           // Store iteration data
-          const workingTerms = searchTerms.filter((term, idx) => {
-            const searchStart = idx * articlesPerSearch;
-            const searchEnd = searchStart + articlesPerSearch;
-            return allPmids.slice(searchStart, searchEnd).length > 0;
-          });
+          const workingTerms = [];
+          for (let i = 0; i < searchTerms.length; i++) {
+            if (state.searchState.successfulTerms.has(searchTerms[i])) {
+              workingTerms.push(searchTerms[i]);
+            }
+          }
           
           state.searchState.iterationsData.push({
             number: iter,
