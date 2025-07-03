@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI-Powered PubMed Research Tool - Enhanced Version</title>
+  <title>Smart PubMed Search - MeSH Learning Edition</title>
   <style>
-    /* Professional styling with clear visual hierarchy */
+    /* Clean, focused styling */
     * {
       box-sizing: border-box;
     }
@@ -16,10 +16,7 @@
       padding: 20px;
       background-color: #f8f9fa;
       color: #333;
-    }
-    
-    .container {
-      max-width: 1400px;
+      max-width: 1200px;
       margin: 0 auto;
     }
     
@@ -27,7 +24,7 @@
       color: #1a5490;
       text-align: center;
       margin-bottom: 30px;
-      font-size: 2.2em;
+      font-size: 2em;
     }
     
     h2, h3 { 
@@ -44,19 +41,12 @@
       color: #495057;
     }
     
-    input, select, button, textarea { 
+    input, select, button { 
       margin: 5px 0;
       padding: 8px 12px;
       border: 1px solid #ced4da;
       border-radius: 5px;
       font-size: 14px;
-      transition: all 0.3s ease;
-    }
-    
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: #4dabf7;
-      box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.1);
     }
     
     button {
@@ -65,13 +55,10 @@
       color: white;
       border: none;
       font-weight: 600;
-      transition: all 0.3s ease;
     }
     
     button:hover:not(:disabled) {
       background-color: #1971c2;
-      transform: translateY(-1px);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
     
     button:disabled { 
@@ -90,59 +77,6 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     
-    /* Tab system */
-    .tabs {
-      display: flex;
-      border-bottom: 2px solid #dee2e6;
-      margin-bottom: 20px;
-      background: white;
-      border-radius: 8px 8px 0 0;
-      overflow: hidden;
-    }
-    
-    .tab {
-      padding: 12px 24px;
-      cursor: pointer;
-      background: #f8f9fa;
-      border: none;
-      font-weight: 600;
-      color: #495057;
-      transition: all 0.3s ease;
-      flex: 1;
-      text-align: center;
-    }
-    
-    .tab:hover {
-      background: #e9ecef;
-    }
-    
-    .tab.active {
-      background: white;
-      color: #228be6;
-      border-bottom: 3px solid #228be6;
-      margin-bottom: -2px;
-    }
-    
-    .tab-content {
-      display: none;
-      animation: fadeIn 0.3s ease;
-    }
-    
-    .tab-content.active {
-      display: block;
-    }
-    
-    /* Status indicators */
-    #progress-status { 
-      font-style: italic;
-      color: #495057;
-      margin-top: 10px;
-      padding: 10px;
-      background: #e7f5ff;
-      border-radius: 5px;
-      display: inline-block;
-    }
-    
     /* Output areas */
     .output-area {
       width: 100%;
@@ -158,45 +92,33 @@
       line-height: 1.5;
     }
     
-    #iteration-log {
-      max-height: 500px;
+    #search-log {
+      max-height: 600px;
     }
     
-    /* MeSH term validation */
-    .mesh-valid {
-      background-color: #d3f9d8;
-      color: #2b8a3e;
-      padding: 2px 6px;
+    /* MeSH term display */
+    .mesh-term {
+      display: inline-block;
+      background: #e3f2fd;
+      border: 1px solid #64b5f6;
+      color: #1565c0;
+      padding: 4px 8px;
+      margin: 2px;
       border-radius: 3px;
-      font-weight: 600;
+      font-size: 13px;
     }
     
-    .mesh-invalid {
-      background-color: #ffe0e0;
-      color: #c92a2a;
-      padding: 2px 6px;
+    .mesh-term-count {
+      background: #1976d2;
+      color: white;
+      padding: 2px 5px;
       border-radius: 3px;
-      font-weight: 600;
+      margin-left: 5px;
+      font-size: 11px;
     }
     
-    .mesh-unknown {
-      background-color: #fff3cd;
-      color: #856404;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-weight: 600;
-    }
-    
-    .mesh-discovered {
-      background-color: #e3f2fd;
-      color: #1976d2;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-weight: 600;
-    }
-    
-    /* Search term display */
-    .search-term {
+    /* Search display */
+    .search-item {
       background: #f1f3f5;
       padding: 8px;
       margin: 5px 0;
@@ -205,87 +127,40 @@
       font-size: 12px;
     }
     
-    .search-term-failed {
-      border-left-color: #c92a2a;
-      background: #ffe0e0;
-    }
-    
-    .search-term-success {
+    .search-success {
       border-left-color: #2b8a3e;
       background: #d3f9d8;
     }
     
-    /* Relevance scores */
-    .score-excellent {
-      color: #2b8a3e;
-      font-weight: bold;
+    .search-failed {
+      border-left-color: #c92a2a;
+      background: #ffe0e0;
     }
     
-    .score-good {
-      color: #5c940d;
-      font-weight: bold;
-    }
-    
-    .score-medium {
-      color: #e67700;
-      font-weight: bold;
-    }
-    
-    .score-poor {
-      color: #c92a2a;
-      font-weight: bold;
-    }
-    
-    /* API test result */
-    .api-test-result {
+    /* Concept display */
+    .concept-group {
       margin: 10px 0;
-      padding: 12px;
-      border-radius: 5px;
-      font-weight: 500;
-    }
-    
-    .api-test-success {
-      background-color: #d3f9d8;
-      color: #2b8a3e;
-      border: 1px solid #8ce99a;
-    }
-    
-    .api-test-failure {
-      background-color: #ffe0e0;
-      color: #c92a2a;
-      border: 1px solid #ffa8a8;
-    }
-    
-    /* CORS warning */
-    #cors-warning {
-      background-color: #fff3cd;
-      border: 1px solid #ffec99;
-      padding: 15px;
-      margin-bottom: 20px;
+      padding: 10px;
+      background: #f8f9fa;
       border-radius: 5px;
     }
     
-    #cors-warning code {
-      background-color: #f8f9fa;
-      padding: 3px 6px;
-      border-radius: 3px;
-      font-family: monospace;
-      border: 1px solid #dee2e6;
-    }
-    
-    /* Token display */
-    .token-display {
-      background: #e7f5ff;
-      padding: 8px 15px;
-      border-radius: 5px;
-      font-family: monospace;
+    .concept-group h4 {
+      margin: 0 0 8px 0;
+      color: #495057;
       font-size: 14px;
-      display: inline-block;
-      border: 1px solid #74c0fc;
-      margin-left: 20px;
     }
     
-    /* Results styling */
+    /* Strategy display */
+    .strategy-box {
+      background: #e7f5ff;
+      border: 1px solid #74c0fc;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+    }
+    
+    /* Results */
     .article-result {
       background: #f8f9fa;
       padding: 15px;
@@ -299,46 +174,22 @@
       color: #1a5490;
     }
     
-    .article-metadata {
-      font-size: 13px;
-      color: #6c757d;
-      margin: 5px 0;
+    .score-high {
+      color: #2b8a3e;
+      font-weight: bold;
     }
     
-    .article-abstract {
-      margin-top: 10px;
-      font-style: italic;
-      color: #495057;
-      line-height: 1.6;
+    .score-medium {
+      color: #e67700;
+      font-weight: bold;
     }
     
-    /* Prompt editor */
-    .prompt-editor {
-      width: 100%;
-      height: 200px;
-      font-family: 'Consolas', 'Monaco', monospace;
-      font-size: 12px;
-      border: 1px solid #ced4da;
-      border-radius: 5px;
-      padding: 10px;
-      background: #f8f9fa;
+    .score-low {
+      color: #c92a2a;
+      font-weight: bold;
     }
     
-    .prompt-section {
-      margin-bottom: 20px;
-      border: 1px solid #dee2e6;
-      border-radius: 5px;
-      padding: 15px;
-      background: #fafbfc;
-    }
-    
-    .prompt-title {
-      font-weight: 600;
-      color: #1a5490;
-      margin-bottom: 10px;
-    }
-    
-    /* Info boxes */
+    /* Important info */
     .info-box {
       background: #e7f5ff;
       border: 1px solid #74c0fc;
@@ -356,30 +207,7 @@
       color: #856404;
     }
     
-    /* PubMed syntax help */
-    .syntax-help {
-      background: #f8f9fa;
-      border: 1px solid #dee2e6;
-      border-radius: 5px;
-      padding: 15px;
-      margin: 15px 0;
-    }
-    
-    .syntax-help h4 {
-      margin-top: 0;
-      color: #495057;
-    }
-    
-    .syntax-example {
-      font-family: monospace;
-      background: white;
-      padding: 5px 8px;
-      border-radius: 3px;
-      margin: 2px 0;
-      display: inline-block;
-    }
-    
-    /* Buttons */
+    /* Primary button */
     .primary-button {
       background-color: #228be6;
       font-size: 16px;
@@ -392,684 +220,104 @@
       font-size: 14px;
       padding: 8px 16px;
     }
-    
-    .success-button {
-      background-color: #2b8a3e;
-    }
-    
-    .warning-button {
-      background-color: #e67700;
-    }
-    
-    .danger-button {
-      background-color: #c92a2a;
-    }
-    
-    /* Concept analysis display */
-    .concept-box {
-      background: #f1f3f5;
-      border: 1px solid #dee2e6;
-      border-radius: 5px;
-      padding: 10px;
-      margin: 10px 0;
-    }
-    
-    .concept-box h5 {
-      margin: 0 0 8px 0;
-      color: #495057;
-    }
-    
-    .synonym-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-    }
-    
-    .synonym-tag {
-      background: white;
-      border: 1px solid #339af0;
-      color: #339af0;
-      padding: 3px 8px;
-      border-radius: 3px;
-      font-size: 12px;
-    }
-    
-    /* Search strategy info */
-    .strategy-info {
-      background: #e9ecef;
-      border-radius: 5px;
-      padding: 8px 12px;
-      margin: 5px 0;
-      font-size: 13px;
-    }
-    
-    /* MeSH learning display */
-    .mesh-learning-box {
-      background: #e3f2fd;
-      border: 1px solid #64b5f6;
-      border-radius: 5px;
-      padding: 10px;
-      margin: 10px 0;
-    }
-    
-    .mesh-learning-box h5 {
-      margin: 0 0 8px 0;
-      color: #1565c0;
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🔬 AI-Powered PubMed Research Tool - Enhanced Version</h1>
+  <h1>🔬 Smart PubMed Search - MeSH Learning Edition</h1>
+  
+  <!-- Configuration Section -->
+  <div class="section">
+    <h2>Configuration</h2>
     
-    <!-- Tab Navigation -->
-    <div class="tabs">
-      <button class="tab active" onclick="showTab('search')">🔍 Search</button>
-      <button class="tab" onclick="showTab('results')">📊 Results</button>
-      <button class="tab" onclick="showTab('evolution')">🧬 Evolution</button>
-      <button class="tab" onclick="showTab('prompts')">📝 Prompts</button>
-      <button class="tab" onclick="showTab('config')">⚙️ Settings</button>
+    <label for="api-key">OpenAI API Key:</label>
+    <input type="password" id="api-key" placeholder="sk-..." size="50" />
+    
+    <label for="model-select" style="margin-left: 20px;">Model:</label>
+    <select id="model-select">
+      <option value="gpt-4-turbo" selected>GPT-4 Turbo</option>
+      <option value="gpt-4o-mini">GPT-4o Mini (Cheaper)</option>
+      <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Cheapest)</option>
+    </select>
+  </div>
+
+  <!-- Query Section -->
+  <div class="section">
+    <h2>Research Query</h2>
+    
+    <input type="text" id="query-input" placeholder="e.g. 'CAR-T therapy for lymphoma clinical outcomes'" 
+           style="width: 100%; font-size: 16px; padding: 10px;" />
+    
+    <div style="margin-top: 15px;">
+      <label for="iterations">Iterations:</label>
+      <input type="number" id="iterations" value="4" min="2" max="6" style="width:50px;" />
+      
+      <label for="articles-per-search" style="margin-left: 20px;">Articles per search:</label>
+      <input type="number" id="articles-per-search" value="20" min="10" max="30" style="width:50px;" />
+      
+      <button id="start-btn" class="primary-button" style="margin-left: 30px;">
+        🔍 Start Smart Search
+      </button>
+      <button id="cancel-btn" class="primary-button" style="display:none; background-color: #c92a2a;">
+        ❌ Cancel
+      </button>
     </div>
     
-    <!-- Search Tab -->
-    <div id="search-tab" class="tab-content active">
-      <!-- Configuration Section -->
-      <div class="section" id="config-section">
-        <h2>Quick Configuration</h2>
-        
-        <!-- CORS Warning -->
-        <div id="cors-warning" style="display:none;">
-          <strong>⚠️ Local File Detected</strong><br>
-          <p style="margin:5px 0;">This tool needs to be hosted online. Quick solutions:</p>
-          <ol style="margin:5px 0 5px 20px;">
-            <li><strong>GitHub Pages</strong>: Upload to GitHub, enable Pages</li>
-            <li><strong>Python Server</strong>: Run <code>python -m http.server 8000</code></li>
-            <li><strong>VS Code</strong>: Use Live Server extension</li>
-          </ol>
-        </div>
-        
-        <!-- API Key Input -->
-        <label for="api-key">OpenAI API Key:</label><br>
-        <input type="password" id="api-key" placeholder="Enter your OpenAI API key (sk-...)" size="50" />
-        <button id="test-api-btn" class="secondary-button" style="margin-left: 10px;">Test API Key</button>
-        <div id="api-test-result"></div>
-        
-        <!-- Model Selection -->
-        <label for="model-select">AI Model:</label>
-        <select id="model-select" style="margin-left: 10px;">
-          <option value="gpt-4-turbo" selected>GPT-4 Turbo</option>
-          <option value="gpt-4o">GPT-4o</option>
-          <option value="gpt-4o-mini">GPT-4o Mini (Cheaper)</option>
-          <option value="gpt-4">GPT-4</option>
-          <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Cheapest)</option>
-        </select>
-        
-        <!-- Token Display -->
-        <div class="token-display" id="token-display">
-          🔤 Tokens - In: 0 | Out: 0 | Cost: $0.00
-        </div>
-      </div>
-
-      <!-- Query Section -->
-      <div class="section" id="query-section">
-        <h2>Research Query</h2>
-        <label for="query-input">Enter your medical research question:</label><br>
-        <input type="text" id="query-input" size="80" placeholder="e.g. 'effects of metformin on diabetes prevention in prediabetic patients'" 
-               value="CRISPR base editing therapy for sickle cell disease clinical trials"
-               style="width: 100%; font-size: 16px; padding: 10px;" />
-        
-        <!-- PubMed Syntax Help -->
-        <div class="syntax-help">
-          <h4>📚 PubMed Search Syntax Quick Reference:</h4>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px;">
-            <div>
-              <strong>Field Tags:</strong><br>
-              <span class="syntax-example">[tiab]</span> = Title/Abstract<br>
-              <span class="syntax-example">[ti]</span> = Title only<br>
-              <span class="syntax-example">[au]</span> = Author<br>
-              <span class="syntax-example">[MeSH]</span> = MeSH term
-            </div>
-            <div>
-              <strong>Boolean Operators:</strong><br>
-              <span class="syntax-example">AND</span> = Both terms<br>
-              <span class="syntax-example">OR</span> = Either term<br>
-              <span class="syntax-example">NOT</span> = Exclude term<br>
-              <span class="syntax-example">( )</span> = Group terms
-            </div>
-            <div>
-              <strong>Wildcards:</strong><br>
-              <span class="syntax-example">*</span> = Any characters<br>
-              <span class="syntax-example">"..."</span> = Exact phrase<br>
-              Example: <span class="syntax-example">cell*</span> finds cells, cellular
-            </div>
-          </div>
-        </div>
-        
-        <h3>Search Parameters</h3>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-          <div>
-            <label for="iterations">Iterations:</label>
-            <input type="number" id="iterations" value="5" min="2" max="8" style="width:60px;" />
-          </div>
-          
-          <div>
-            <label for="articles-per-iter">Articles per iteration:</label>
-            <input type="number" id="articles-per-iter" value="30" min="10" max="50" style="width:60px;" />
-          </div>
-          
-          <div>
-            <label for="top-articles">Top articles to analyze:</label>
-            <input type="number" id="top-articles" value="10" min="3" max="15" style="width:60px;" />
-          </div>
-          
-          <div>
-            <label for="search-strategy">Search Strategy:</label>
-            <select id="search-strategy">
-              <option value="adaptive" selected>Adaptive (Recommended)</option>
-              <option value="broad-to-narrow">Broad → Narrow</option>
-              <option value="focused">Focused</option>
-              <option value="exploratory">Exploratory</option>
-            </select>
-          </div>
-        </div>
-        
-        <button id="start-btn" class="primary-button" style="margin-top: 20px;">
-          🔍 Start Adaptive Search
-        </button>
-        <button id="cancel-btn" class="primary-button danger-button" style="display:none;">
-          ❌ Cancel Search
-        </button>
-        <span id="progress-status"></span>
-      </div>
-
-      <!-- Progress Log Section -->
-      <div class="section" id="log-section">
-        <h2>Search Progress</h2>
-        <div id="iteration-log" class="output-area" aria-live="polite"></div>
-      </div>
-    </div>
-    
-    <!-- Results Tab -->
-    <div id="results-tab" class="tab-content">
-      <div class="section" id="results-section">
-        <h2>Top Articles with Abstracts</h2>
-        <div id="results" class="output-area"></div>
-        
-        <h3>AI Summary of Top Articles</h3>
-        <div style="margin: 10px 0;">
-          <label for="summary-count">Summarize top</label>
-          <input type="number" id="summary-count" value="5" min="3" max="15" style="width:50px;" /> articles
-          <button id="summary-btn" class="secondary-button" style="margin-left: 10px;">Generate Summary</button>
-        </div>
-        <div id="summary" class="output-area"></div>
-      </div>
-    </div>
-    
-    <!-- Evolution Tab -->
-    <div id="evolution-tab" class="tab-content">
-      <div class="section" id="evolution-section">
-        <h2>Search Evolution Overview</h2>
-        <div id="evolution" class="output-area"></div>
-        
-        <h3>Complete Article Rankings</h3>
-        <div id="rankings" class="output-area"></div>
-      </div>
-    </div>
-    
-    <!-- Prompts Tab -->
-    <div id="prompts-tab" class="tab-content">
-      <div class="section">
-        <h2>⚠️ Prompt Customization</h2>
-        <div class="warning-box">
-          <strong>Warning:</strong> These prompts have been carefully designed for optimal performance. 
-          Modify only if you understand the implications. Use [[term]] syntax for clean AI responses.
-        </div>
-        
-        <!-- Concept Analysis -->
-        <div class="prompt-section">
-          <div class="prompt-title">Concept Analysis Prompt</div>
-          <textarea id="prompt-concept-analysis" class="prompt-editor">You are a medical research expert. Analyze this query: "{query}"
-
-Break it down into core concepts and provide synonyms for each:
-
-1. GENE/PROTEIN/THERAPY: List names, aliases, techniques
-2. DISEASE/CONDITION: List the disease and related conditions
-3. TISSUE/ORGAN/SYSTEM: List anatomical terms if relevant
-4. METHOD/TRIAL TYPE: List experimental approaches, study types
-
-For each concept, provide:
-- Primary term
-- Common synonyms (2-4)
-- MeSH terms if applicable
-- Broader/narrower terms
-
-Format each synonym group in [[brackets]].
-
-Example for "CRISPR therapy for diabetes clinical trials":
-THERAPY: [[CRISPR]], [[gene editing]], [[CRISPR-Cas9]], [[genome editing]]
-DISEASE: [[diabetes]], [[diabetes mellitus]], [[type 2 diabetes]], [[T2DM]]
-METHOD: [[clinical trial]], [[randomized controlled trial]], [[RCT]], [[phase 2 trial]]</textarea>
-        </div>
-        
-        <!-- Two-Concept Search Generation -->
-        <div class="prompt-section">
-          <div class="prompt-title">Two-Concept Broad Search Prompt</div>
-          <textarea id="prompt-two-concept-search" class="prompt-editor">Generate broad PubMed searches using ONLY TWO concepts at a time for: "{query}"
-
-Concepts identified:
-{concepts}
-
-Create searches that combine just two concept categories at a time. This broad approach often succeeds when complex searches fail.
-
-Generate 6 two-concept searches:
-1. THERAPY + DISEASE
-2. THERAPY + METHOD
-3. DISEASE + METHOD
-4. THERAPY + TISSUE (if applicable)
-5. DISEASE + TISSUE (if applicable)
-6. Most promising pair based on query
-
-Use OR within each concept group for breadth.
-
-Example output:
-1. [[("CRISPR" OR "gene editing") AND ("diabetes" OR "diabetes mellitus")]]
-2. [[("CRISPR" OR "CRISPR-Cas9") AND ("clinical trial" OR "phase 2")]]
-3. [[("diabetes mellitus"[MeSH] OR T2DM) AND "clinical trial"]]
-
-Return searches in [[brackets]].</textarea>
-        </div>
-        
-        <!-- MeSH Learning Prompt -->
-        <div class="prompt-section">
-          <div class="prompt-title">MeSH Term Learning Prompt</div>
-          <textarea id="prompt-mesh-learning" class="prompt-editor">Analyze the MeSH terms from these successful search results for: "{query}"
-
-High-scoring articles have these MeSH terms:
-{mesh_terms}
-
-Based on these actual MeSH terms from relevant articles:
-1. Identify the most relevant MeSH terms for our search
-2. Find related MeSH terms we should try
-3. Suggest MeSH-based searches
-
-Generate 5 MeSH-informed searches that:
-- Use confirmed MeSH terms from successful results
-- Combine MeSH terms effectively
-- Mix MeSH with text words for comprehensive coverage
-
-Format: Return searches in [[brackets]]
-
-Example:
-1. [["Diabetes Mellitus, Type 2"[MeSH] AND "CRISPR-Cas Systems"[MeSH]]]
-2. [["Gene Editing"[MeSH] AND diabetes AND clinical]]</textarea>
-        </div>
-        
-        <!-- Adaptive Search Generation -->
-        <div class="prompt-section">
-          <div class="prompt-title">Adaptive Search Generation Prompt</div>
-          <textarea id="prompt-adaptive-search" class="prompt-editor">Generate PubMed search strategies for: "{query}"
-
-Context from previous searches:
-{context}
-
-Successful MeSH terms found: {discovered_mesh}
-
-Create search strategies that adapt based on what we've learned:
-
-1. If previous searches with all concepts yielded nothing, use TWO-CONCEPT searches
-2. Incorporate MeSH terms from successful results
-3. If specific terms failed, try broader categories
-4. Build on successful patterns, avoid failed ones
-
-Generate 5-6 strategies:
-1. MESH-BASED: Use discovered MeSH terms
-2. TWO-CONCEPT BROAD: Just two main concepts with OR
-3. SUCCESSFUL PATTERN: Modify what worked before
-4. ALTERNATIVE ANGLE: Different concept combination
-5. EXPLORATORY: Find related work in the field
-6. SPECIFIC REFINED: Narrow successful broad searches
-
-Return searches in [[brackets]].</textarea>
-        </div>
-        
-        <!-- Article Analysis -->
-        <div class="prompt-section">
-          <div class="prompt-title">Enhanced Article Analysis Prompt</div>
-          <textarea id="prompt-article-analysis" class="prompt-editor">Analyze these articles for relevance to: "{query}"
-
-Original concepts sought:
-{concepts}
-
-For each article, provide:
-- Relevance score (0-100)
-- Which concepts are present/absent
-- Key MeSH terms that could improve our search
-- Related findings that might be useful
-
-Scoring guidelines:
-- 80-100: Directly addresses the query
-- 60-79: Addresses most concepts or provides highly relevant related work
-- 40-59: Partially relevant, missing key concepts but useful context
-- 20-39: Tangentially related
-- 0-19: Not relevant
-
-Articles:
-{articles}
-
-Format: Article X: [[score]] - reasoning...
-Also list key MeSH terms from high-scoring articles.</textarea>
-        </div>
-        
-        <button onclick="savePrompts()" class="success-button">Save Custom Prompts</button>
-        <button onclick="resetPrompts()" class="warning-button">Reset to Defaults</button>
-      </div>
-    </div>
-    
-    <!-- Configuration Tab -->
-    <div id="config-tab" class="tab-content">
-      <div class="section">
-        <h2>Advanced Settings</h2>
-        
-        <h3>Search Behavior</h3>
-        <label>
-          <input type="checkbox" id="use-two-concept" checked> 
-          Use two-concept broad searches (recommended)
-        </label><br>
-        
-        <label>
-          <input type="checkbox" id="learn-mesh" checked> 
-          Learn and use MeSH terms from successful results
-        </label><br>
-        
-        <label>
-          <input type="checkbox" id="validate-mesh" checked> 
-          Validate MeSH terms before searching
-        </label><br>
-        
-        <label>
-          <input type="checkbox" id="show-mesh-feedback" checked> 
-          Show MeSH validation feedback
-        </label><br>
-        
-        <label>
-          <input type="checkbox" id="adaptive-search" checked> 
-          Use adaptive search (drop failing terms)
-        </label><br>
-        
-        <label>
-          <input type="checkbox" id="explore-related" checked> 
-          Explore related genes/concepts when specific search fails
-        </label><br>
-        
-        <label>
-          <input type="checkbox" id="use-wildcards" checked> 
-          Use wildcards for term variations
-        </label><br>
-        
-        <h3>Result Processing</h3>
-        <label for="min-relevance">Minimum relevance score to display:</label>
-        <input type="number" id="min-relevance" value="20" min="0" max="100" style="width:60px;" /><br>
-        
-        <label for="high-relevance">High relevance threshold:</label>
-        <input type="number" id="high-relevance" value="60" min="40" max="100" style="width:60px;" /><br>
-        
-        <label for="mesh-learning-threshold">Min score for MeSH learning:</label>
-        <input type="number" id="mesh-learning-threshold" value="70" min="50" max="100" style="width:60px;" /><br>
-        
-        <label for="rate-limit">API rate limit delay (ms):</label>
-        <input type="number" id="rate-limit" value="400" min="100" max="2000" style="width:80px;" /><br>
-        
-        <h3>Export Options</h3>
-        <button onclick="exportResults('json')" class="secondary-button">Export as JSON</button>
-        <button onclick="exportResults('csv')" class="secondary-button">Export as CSV</button>
-        <button onclick="exportResults('txt')" class="secondary-button">Export as Text</button>
-        <button onclick="exportResults('bibtex')" class="secondary-button">Export as BibTeX</button>
-      </div>
+    <div class="info-box" style="margin-top: 15px;">
+      <strong>💡 How it works:</strong> Starts with broad two-concept searches, learns MeSH terms from successful results, 
+      then uses those MeSH terms to find more relevant articles. Simple but powerful!
     </div>
   </div>
 
+  <!-- Search Progress -->
+  <div class="section">
+    <h2>Search Progress</h2>
+    <div id="search-log" class="output-area"></div>
+  </div>
+
+  <!-- MeSH Learning Display -->
+  <div class="section" id="mesh-section" style="display:none;">
+    <h2>🏷️ Discovered MeSH Terms</h2>
+    <div id="mesh-display"></div>
+  </div>
+
+  <!-- Results Section -->
+  <div class="section" id="results-section" style="display:none;">
+    <h2>📊 Results</h2>
+    
+    <h3>Top Articles</h3>
+    <div id="top-articles"></div>
+    
+    <h3>Summary</h3>
+    <button id="summarize-btn" class="secondary-button">Generate Summary of Top 5 Articles</button>
+    <div id="summary" class="output-area" style="display:none; margin-top: 10px;"></div>
+    
+    <h3>All Articles</h3>
+    <div id="all-articles" class="output-area"></div>
+  </div>
+
   <script>
-    // ========== Global State Management ==========
+    // ========== State Management ==========
     let state = {
-      config: {},
-      searchState: {
-        allArticles: {},
-        iterationsData: [],
-        finalRanking: [],
-        meshTermsValidated: {},
-        searchHistory: [],
-        successfulTerms: new Set(),
-        failedSearches: [],
-        conceptAnalysis: null,
-        searchPatterns: {
-          successful: [],
-          failed: []
-        },
-        relatedFindings: [],
-        missingConcepts: [],
-        discoveredMeshTerms: new Set(),
-        meshTermFrequency: {}
-      },
+      query: '',
+      apiKey: '',
+      model: 'gpt-4-turbo',
+      isSearching: false,
       abortController: null,
-      currentTab: 'search',
-      customPrompts: {}
+      articles: {},  // PMID -> article
+      meshTerms: {}, // term -> count
+      searchHistory: [],
+      iterations: []
     };
 
-    // ========== Default Prompt Templates ==========
-    const DEFAULT_PROMPTS = {
-      CONCEPT_ANALYSIS: document.getElementById('prompt-concept-analysis').value,
-      TWO_CONCEPT_SEARCH: document.getElementById('prompt-two-concept-search').value,
-      MESH_LEARNING: document.getElementById('prompt-mesh-learning').value,
-      ADAPTIVE_SEARCH: document.getElementById('prompt-adaptive-search').value,
-      ARTICLE_ANALYSIS: document.getElementById('prompt-article-analysis').value,
-      
-      PARTIAL_MATCH_RECOVERY: `The search "{failed_query}" returned no results.
-
-We need to identify which component is too restrictive.
-
-Original components:
-{components}
-
-Generate 5 recovery searches by:
-1. DROP MOST SPECIFIC: Remove the most specific term (usually drug/gene name)
-2. DROP CONDITION: Remove the disease/condition term
-3. DROP METHOD: Remove the method/trial type term
-4. TWO-CONCEPT ONLY: Use just the two most important concepts
-5. BROADEN ALL: Use broader terms for each concept
-
-Return searches in [[brackets]].
-
-Example: If "CRISPR AND sickle cell AND clinical trial" fails:
-1. [["gene editing" AND "sickle cell" AND "clinical trial"]]
-2. [[CRISPR AND "clinical trial"]]
-3. [[CRISPR AND "sickle cell disease"]]
-4. [["sickle cell" AND "clinical trial"]]
-5. [["gene therapy" AND "hemoglobinopathies" AND trial]]`,
-
-      EXTRACT_KEYWORDS: `Extract key terms from these relevant articles that could improve our search for: "{query}"
-
-Articles:
-{articles}
-
-Identify:
-1. MeSH terms that appear frequently
-2. Alternative therapy/treatment names
-3. Related diseases or conditions
-4. Specific trial phases or study designs
-5. Key authors or research groups
-
-Focus especially on MeSH terms as they're standardized.
-
-Format as:
-MESH_TERMS: [[term1]], [[term2]]...
-THERAPIES: [[term1]], [[term2]]...
-etc.`,
-
-      LITERATURE_GAP_ANALYSIS: `Based on our search for "{query}", analyze what we found and didn't find:
-
-Found articles about:
-{found_topics}
-
-Failed to find articles about:
-{failed_queries}
-
-Successful MeSH terms discovered:
-{mesh_terms}
-
-Provide:
-1. GAPS: What specific aspects of the query have no literature?
-2. RELATED WORK: What similar work exists that could be relevant?
-3. EMERGING AREAS: Based on MeSH terms, what new combinations might work?
-4. RECOMMENDATIONS: How should a researcher proceed given these findings?
-
-Be specific and actionable.`
-    };
-
-    // Load custom prompts or use defaults
-    function loadPrompts() {
-      const saved = localStorage.getItem('pubmedToolPrompts');
-      if (saved) {
-        state.customPrompts = JSON.parse(saved);
-        // Update textareas
-        Object.keys(state.customPrompts).forEach(key => {
-          const element = document.getElementById(`prompt-${key.toLowerCase().replace(/_/g, '-')}`);
-          if (element) element.value = state.customPrompts[key];
-        });
-      }
-    }
-
-    // Save custom prompts
-    function savePrompts() {
-      state.customPrompts = {
-        CONCEPT_ANALYSIS: document.getElementById('prompt-concept-analysis').value,
-        TWO_CONCEPT_SEARCH: document.getElementById('prompt-two-concept-search').value,
-        MESH_LEARNING: document.getElementById('prompt-mesh-learning').value,
-        ADAPTIVE_SEARCH: document.getElementById('prompt-adaptive-search').value,
-        ARTICLE_ANALYSIS: document.getElementById('prompt-article-analysis').value
-      };
-      localStorage.setItem('pubmedToolPrompts', JSON.stringify(state.customPrompts));
-      alert('Custom prompts saved successfully!');
-    }
-
-    // Reset prompts to defaults
-    function resetPrompts() {
-      if (confirm('Reset all prompts to defaults?')) {
-        document.getElementById('prompt-concept-analysis').value = DEFAULT_PROMPTS.CONCEPT_ANALYSIS;
-        document.getElementById('prompt-two-concept-search').value = DEFAULT_PROMPTS.TWO_CONCEPT_SEARCH;
-        document.getElementById('prompt-mesh-learning').value = DEFAULT_PROMPTS.MESH_LEARNING;
-        document.getElementById('prompt-adaptive-search').value = DEFAULT_PROMPTS.ADAPTIVE_SEARCH;
-        document.getElementById('prompt-article-analysis').value = DEFAULT_PROMPTS.ARTICLE_ANALYSIS;
-        localStorage.removeItem('pubmedToolPrompts');
-        state.customPrompts = {};
-        alert('Prompts reset to defaults!');
-      }
-    }
-
-    // ========== Token Counter ==========
-    class TokenCounter {
-      constructor() {
-        this.inputTokens = 0;
-        this.outputTokens = 0;
-      }
-      
-      estimateTokens(text) {
-        // Rough estimate: ~1 token per 4 characters
-        return Math.ceil(text.length / 4);
-      }
-      
-      addApiCall(prompt, response) {
-        this.inputTokens += this.estimateTokens(prompt);
-        this.outputTokens += this.estimateTokens(response);
-        updateTokenDisplay();
-      }
-      
-      getCostEstimate(model = "gpt-4-turbo") {
-        const pricing = {
-          "gpt-4-turbo": { input: 0.01, output: 0.03 },
-          "gpt-4o": { input: 0.005, output: 0.015 },
-          "gpt-4o-mini": { input: 0.00015, output: 0.0006 },
-          "gpt-4": { input: 0.03, output: 0.06 },
-          "gpt-3.5-turbo": { input: 0.0005, output: 0.0015 }
-        };
-        
-        const modelPricing = pricing[model] || pricing["gpt-4-turbo"];
-        const inputCost = (this.inputTokens / 1000) * modelPricing.input;
-        const outputCost = (this.outputTokens / 1000) * modelPricing.output;
-        
-        return inputCost + outputCost;
-      }
-      
-      reset() {
-        this.inputTokens = 0;
-        this.outputTokens = 0;
-      }
-    }
-
-    const tokenCounter = new TokenCounter();
-
-    // ========== Core Configuration ==========
-    const CORS_PROXIES = [
-      'https://corsproxy.io/?',
-      'https://api.codetabs.com/v1/proxy?quest=',
-      'https://api.allorigins.win/raw?url='
-    ];
-    let currentProxyIndex = 0;
+    // ========== Core Functions ==========
     
-    // ========== Helper Functions ==========
-    
-    // Tab management
-    function showTab(tabName) {
-      document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-      });
-      document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
-      });
-      
-      document.getElementById(`${tabName}-tab`).classList.add('active');
-      event.target.classList.add('active');
-      state.currentTab = tabName;
-    }
-
-    // Parse bracketed terms from AI response
-    function parseBracketedTerms(text) {
-      const matches = text.match(/\[\[([^\]]+)\]\]/g);
-      if (matches && matches.length > 0) {
-        return matches.map(match => match.replace(/\[\[|\]\]/g, '').trim());
-      }
-      
-      // Fallback parsing logic
-      const lines = text.split('\n');
-      const searches = [];
-      
-      for (const line of lines) {
-        const numbered = line.match(/^\d+\.\s*(.+)/);
-        const labeled = line.match(/^(?:BROAD|FOCUSED|MESH|TWO-CONCEPT|RECOVERY):\s*(.+)/i);
-        
-        if (numbered) {
-          searches.push(numbered[1].trim());
-        } else if (labeled) {
-          searches.push(labeled[1].trim());
-        }
-      }
-      
-      return searches.filter(s => s.length > 0);
-    }
-
-    // Enhanced logging with HTML support
-    function logMessage(message, isHtml = false, className = '') {
-      const logArea = document.getElementById("iteration-log");
+    function log(message, isHtml = false) {
+      const logArea = document.getElementById('search-log');
       const timestamp = new Date().toLocaleTimeString();
       
       if (isHtml) {
         const div = document.createElement('div');
         div.innerHTML = `[${timestamp}] ${message}`;
-        if (className) div.className = className;
         logArea.appendChild(div);
       } else {
         logArea.textContent += `[${timestamp}] ${message}`;
@@ -1077,1521 +325,532 @@ Be specific and actionable.`
       logArea.scrollTop = logArea.scrollHeight;
     }
 
-    // Update token display
-    function updateTokenDisplay() {
-      const cost = tokenCounter.getCostEstimate(state.config.modelChoice);
-      document.getElementById("token-display").textContent = 
-        `🔤 Tokens - In: ${tokenCounter.inputTokens.toLocaleString()} | Out: ${tokenCounter.outputTokens.toLocaleString()} | Cost: $${cost.toFixed(4)}`;
-    }
+    async function callOpenAI(prompt, temperature = 0.3) {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${state.apiKey}`
+        },
+        body: JSON.stringify({
+          model: state.model,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: temperature,
+          max_tokens: 800
+        }),
+        signal: state.abortController?.signal
+      });
 
-    // ========== API Functions ==========
-    
-    // OpenAI API call
-    async function callOpenAI(prompt, temperature = 0.3, maxTokens = 1000) {
-      const requestBody = {
-        model: state.config.modelChoice,
-        messages: [{ role: "user", content: prompt }],
-        temperature: temperature,
-        max_tokens: maxTokens
-      };
-      
-      try {
-        const response = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${state.config.openAIKey}`
-          },
-          body: JSON.stringify(requestBody),
-          signal: state.abortController?.signal
-        });
-        
-        const responseText = await response.text();
-        
-        if (!response.ok) {
-          let errorMessage = `OpenAI API Error: ${response.status}`;
-          try {
-            const errorData = JSON.parse(responseText);
-            if (errorData.error?.message) {
-              errorMessage = errorData.error.message;
-            }
-          } catch (e) {}
-          throw new Error(errorMessage);
-        }
-        
-        const data = JSON.parse(responseText);
-        const text = data.choices[0].message.content.trim();
-        
-        tokenCounter.addApiCall(prompt, text);
-        
-        return text;
-      } catch (error) {
-        if (error.name === 'AbortError') {
-          logMessage("❌ API call cancelled.\n");
-        } else {
-          logMessage(`❌ API Error: ${error.message}\n`);
-        }
-        throw error;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error?.message || 'API error');
       }
+
+      const data = await response.json();
+      return data.choices[0].message.content.trim();
     }
 
-    // Analyze query concepts
-    async function analyzeQueryConcepts(query) {
-      logMessage("\n🧠 Analyzing query concepts and synonyms...\n");
+    // Extract concepts from query (simplified)
+    async function extractConcepts(query) {
+      log('\n🧠 Analyzing query concepts...\n');
       
-      const prompt = getPrompt('CONCEPT_ANALYSIS').replace("{query}", query);
-      
+      const prompt = `Extract key medical concepts from this query: "${query}"
+
+Identify:
+1. INTERVENTION/THERAPY: treatments, procedures, drugs
+2. CONDITION/DISEASE: medical conditions, diseases
+3. POPULATION: patient characteristics, age groups
+4. OUTCOME: what's being measured or studied
+5. STUDY TYPE: trial phase, study design
+
+Return ONLY a JSON object like:
+{
+  "therapy": ["CAR-T", "chimeric antigen receptor"],
+  "disease": ["lymphoma", "B-cell lymphoma"],
+  "population": ["adults", "refractory patients"],
+  "outcome": ["survival", "response rate"],
+  "study": ["clinical trial", "phase 2"]
+}
+
+Include 1-3 terms per category. Some categories may be empty.`;
+
       try {
-        const response = await callOpenAI(prompt, 0.3, 800);
+        const response = await callOpenAI(prompt);
+        const concepts = JSON.parse(response);
         
-        // Parse the response to extract concepts
-        const concepts = {
-          therapy: [],
-          disease: [],
-          tissue: [],
-          method: []
-        };
-        
-        const lines = response.split('\n');
-        let currentCategory = null;
-        
-        lines.forEach(line => {
-          if (line.includes('THERAPY') || line.includes('GENE') || line.includes('PROTEIN')) currentCategory = 'therapy';
-          else if (line.includes('DISEASE') || line.includes('CONDITION')) currentCategory = 'disease';
-          else if (line.includes('TISSUE') || line.includes('ORGAN') || line.includes('SYSTEM')) currentCategory = 'tissue';
-          else if (line.includes('METHOD') || line.includes('TRIAL') || line.includes('MODEL')) currentCategory = 'method';
-          
-          if (currentCategory) {
-            const terms = parseBracketedTerms(line);
-            if (terms.length > 0) {
-              concepts[currentCategory].push(...terms);
-            }
-          }
-        });
-        
-        // Display the analysis
-        logMessage('<div class="concept-box">', true);
-        Object.entries(concepts).forEach(([category, terms]) => {
-          if (terms.length > 0) {
-            logMessage(`<h5>${category.toUpperCase()}:</h5><div class="synonym-list">`, true);
+        // Display concepts
+        log('<div class="concept-group">', true);
+        Object.entries(concepts).forEach(([type, terms]) => {
+          if (terms && terms.length > 0) {
+            log(`<h4>${type.toUpperCase()}:</h4>`, true);
             terms.forEach(term => {
-              logMessage(`<span class="synonym-tag">${term}</span>`, true);
+              log(`<span class="mesh-term">${term}</span>`, true);
             });
-            logMessage('</div>', true);
           }
         });
-        logMessage('</div>\n', true);
+        log('</div>', true);
         
-        state.searchState.conceptAnalysis = concepts;
         return concepts;
-        
       } catch (e) {
-        logMessage(`⚠️ Concept analysis failed: ${e.message}\n`);
-        // Fallback: extract basic terms from query
-        const terms = query.match(/\b\w+\b/g) || [];
+        log(`⚠️ Concept extraction failed: ${e.message}\n`);
+        // Fallback
         return {
-          therapy: terms.filter(t => ['crispr', 'therapy', 'treatment', 'editing'].includes(t.toLowerCase())),
-          disease: terms.filter(t => ['disease', 'cancer', 'diabetes', 'disorder'].includes(t.toLowerCase())),
-          tissue: terms.filter(t => ['cell', 'tissue', 'organ', 'blood'].includes(t.toLowerCase())),
-          method: terms.filter(t => ['trial', 'clinical', 'study', 'phase'].includes(t.toLowerCase()))
+          therapy: [query.split(' ')[0]],
+          disease: [query.split(' ').slice(-1)[0]]
         };
       }
     }
 
     // Generate two-concept searches
-    async function generateTwoConceptSearches(query, concepts) {
-      logMessage("\n🔍 Generating two-concept broad searches...\n");
+    function generateTwoConceptSearches(concepts) {
+      const searches = [];
       
-      const conceptsStr = Object.entries(concepts)
-        .map(([key, terms]) => `${key.toUpperCase()}: ${terms.join(', ')}`)
-        .join('\n');
+      // Helper to create search with OR
+      const makeSearch = (terms1, terms2) => {
+        if (!terms1?.length || !terms2?.length) return null;
+        
+        const part1 = terms1.length > 1 
+          ? `(${terms1.map(t => `"${t}"`).join(' OR ')})` 
+          : `"${terms1[0]}"`;
+        const part2 = terms2.length > 1
+          ? `(${terms2.map(t => `"${t}"`).join(' OR ')})`
+          : `"${terms2[0]}"`;
+        
+        return `${part1} AND ${part2}`;
+      };
       
-      const prompt = getPrompt('TWO_CONCEPT_SEARCH')
-        .replace("{query}", query)
-        .replace("{concepts}", conceptsStr);
-      
-      try {
-        const response = await callOpenAI(prompt, 0.3, 600);
-        
-        logMessage("\n📝 Two-Concept Strategy:\n");
-        logMessage("---\n" + response + "\n---\n\n");
-        
-        const searches = parseBracketedTerms(response);
-        
-        if (searches.length === 0) {
-          throw new Error("No valid search terms extracted");
-        }
-        
-        return searches;
-      } catch (e) {
-        logMessage(`⚠️ Failed to generate two-concept searches: ${e.message}\n`);
-        
-        // Fallback: create two-concept combinations manually
-        const searches = [];
-        
-        // Helper to create OR groups
-        const makeOrGroup = (terms) => {
-          if (terms.length === 0) return null;
-          if (terms.length === 1) return terms[0];
-          return `(${terms.slice(0, 3).join(' OR ')})`;
-        };
-        
-        // Generate combinations
-        if (concepts.therapy.length > 0 && concepts.disease.length > 0) {
-          searches.push(`${makeOrGroup(concepts.therapy)} AND ${makeOrGroup(concepts.disease)}`);
-        }
-        if (concepts.therapy.length > 0 && concepts.method.length > 0) {
-          searches.push(`${makeOrGroup(concepts.therapy)} AND ${makeOrGroup(concepts.method)}`);
-        }
-        if (concepts.disease.length > 0 && concepts.method.length > 0) {
-          searches.push(`${makeOrGroup(concepts.disease)} AND ${makeOrGroup(concepts.method)}`);
-        }
-        
-        return searches.filter(s => s && s.length > 5);
+      // Generate combinations
+      if (concepts.therapy && concepts.disease) {
+        searches.push(makeSearch(concepts.therapy, concepts.disease));
       }
+      if (concepts.therapy && concepts.outcome) {
+        searches.push(makeSearch(concepts.therapy, concepts.outcome));
+      }
+      if (concepts.disease && concepts.outcome) {
+        searches.push(makeSearch(concepts.disease, concepts.outcome));
+      }
+      if (concepts.therapy && concepts.study) {
+        searches.push(makeSearch(concepts.therapy, concepts.study));
+      }
+      if (concepts.disease && concepts.study) {
+        searches.push(makeSearch(concepts.disease, concepts.study));
+      }
+      
+      // Add some single concept searches if we have few combinations
+      if (searches.length < 3) {
+        if (concepts.therapy?.length > 0) {
+          searches.push(`"${concepts.therapy[0]}"`);
+        }
+        if (concepts.disease?.length > 0) {
+          searches.push(`"${concepts.disease[0]}"`);
+        }
+      }
+      
+      return searches.filter(s => s !== null);
     }
 
-    // Generate MeSH-based searches from discovered terms
-    async function generateMeshBasedSearches(query, meshTerms) {
-      if (meshTerms.size === 0) return [];
+    // Generate MeSH-based searches
+    function generateMeshSearches(meshTerms) {
+      const searches = [];
       
-      logMessage("\n🏷️ Generating MeSH-based searches from discovered terms...\n");
+      // Sort by frequency
+      const sortedTerms = Object.entries(meshTerms)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([term]) => term);
       
-      // Get top MeSH terms by frequency
-      const meshArray = Array.from(meshTerms);
-      const sortedMesh = meshArray
-        .map(term => ({
-          term,
-          count: state.searchState.meshTermFrequency[term] || 1
-        }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 20);
-      
-      const meshStr = sortedMesh
-        .map(m => `${m.term} (appeared ${m.count} times)`)
-        .join('\n');
-      
-      const prompt = getPrompt('MESH_LEARNING')
-        .replace("{query}", query)
-        .replace("{mesh_terms}", meshStr);
-      
-      try {
-        const response = await callOpenAI(prompt, 0.3, 600);
-        
-        logMessage("\n📝 MeSH-based Strategy:\n");
-        logMessage("---\n" + response + "\n---\n\n");
-        
-        const searches = parseBracketedTerms(response);
-        return searches;
-      } catch (e) {
-        logMessage(`⚠️ Failed to generate MeSH searches: ${e.message}\n`);
-        
-        // Fallback: combine top MeSH terms
-        const topTerms = sortedMesh.slice(0, 5).map(m => `"${m.term}"[MeSH]`);
-        const searches = [];
-        
-        // Pairwise combinations
-        for (let i = 0; i < topTerms.length - 1; i++) {
-          for (let j = i + 1; j < topTerms.length; j++) {
-            searches.push(`${topTerms[i]} AND ${topTerms[j]}`);
-            if (searches.length >= 3) break;
-          }
-          if (searches.length >= 3) break;
-        }
-        
-        return searches;
-      }
-    }
-
-    // Generate adaptive search terms
-    async function generateAdaptiveSearchTerms(query, iteration, concepts) {
-      logMessage("\n🔄 Generating adaptive search strategies...\n");
-      
-      const context = buildSearchContext();
-      const discoveredMesh = Array.from(state.searchState.discoveredMeshTerms).slice(0, 10).join(", ");
-      
-      const prompt = getPrompt('ADAPTIVE_SEARCH')
-        .replace("{query}", query)
-        .replace("{context}", context)
-        .replace("{discovered_mesh}", discoveredMesh || "none yet");
-      
-      try {
-        const response = await callOpenAI(prompt, 0.4, 800);
-        
-        logMessage("\n📝 AI Adaptive Strategy:\n");
-        logMessage("---\n" + response + "\n---\n\n");
-        
-        const searches = parseBracketedTerms(response);
-        
-        if (searches.length === 0) {
-          throw new Error("No valid search terms extracted");
-        }
-        
-        return searches;
-      } catch (e) {
-        logMessage(`⚠️ Failed to generate adaptive searches: ${e.message}\n`);
-        
-        // Fallback: use two-concept searches
-        return generateTwoConceptSearches(query, concepts);
-      }
-    }
-
-    // Handle search failure with partial match recovery
-    async function handleSearchFailure(failedQuery, components) {
-      logMessage("\n🔧 Attempting partial match recovery...\n");
-      
-      const prompt = DEFAULT_PROMPTS.PARTIAL_MATCH_RECOVERY
-        .replace("{failed_query}", failedQuery)
-        .replace("{components}", components.join(', '));
-      
-      try {
-        const response = await callOpenAI(prompt, 0.3, 600);
-        const recoverySearches = parseBracketedTerms(response);
-        
-        logMessage("Recovery strategies:\n");
-        recoverySearches.forEach((search, i) => {
-          logMessage(`  ${i + 1}. ${search}\n`);
-        });
-        
-        return recoverySearches;
-      } catch (e) {
-        logMessage(`⚠️ Recovery generation failed: ${e.message}\n`);
-        
-        // Simple fallback: drop each component systematically
-        const fallbacks = [];
-        
-        // Two-concept combinations
-        for (let i = 0; i < components.length - 1; i++) {
-          for (let j = i + 1; j < components.length; j++) {
-            fallbacks.push(`${components[i]} AND ${components[j]}`);
-          }
-        }
-        
-        return fallbacks.slice(0, 5);
-      }
-    }
-
-    // Validate MeSH term
-    async function validateMeshTerm(term) {
-      if (state.searchState.meshTermsValidated[term] !== undefined) {
-        return state.searchState.meshTermsValidated[term];
-      }
-      
-      const url = `https://id.nlm.nih.gov/mesh/lookup/descriptor?label=${encodeURIComponent(term)}&match=exact&limit=1`;
-      
-      try {
-        const resp = await cancellableFetch(url);
-        if (!resp.ok) return false;
-        
-        const data = await resp.json();
-        const isValid = Array.isArray(data) && data.length > 0 && data[0].label === term;
-        
-        state.searchState.meshTermsValidated[term] = isValid;
-        
-        return isValid;
-      } catch (error) {
-        console.warn("MeSH verification error:", error);
-        return false;
-      }
-    }
-
-    // Enhanced fetch with CORS proxy
-    async function cancellableFetch(url, options = {}) {
-      let lastError;
-      
-      // Try direct fetch first for non-NCBI URLs
-      if (!url.includes('ncbi.nlm.nih.gov')) {
-        try {
-          const response = await fetch(url, { ...options, signal: state.abortController?.signal });
-          if (response.ok) return response;
-        } catch (e) {}
-      }
-      
-      // Try CORS proxies
-      for (let i = 0; i < CORS_PROXIES.length; i++) {
-        const proxyIndex = (currentProxyIndex + i) % CORS_PROXIES.length;
-        const proxy = CORS_PROXIES[proxyIndex];
-        const proxiedUrl = proxy + encodeURIComponent(url);
-        
-        try {
-          const response = await fetch(proxiedUrl, { ...options, signal: state.abortController?.signal });
-          if (response.ok) {
-            currentProxyIndex = proxyIndex;
-            return response;
-          }
-          lastError = new Error(`Proxy returned ${response.status}`);
-        } catch (error) {
-          lastError = error;
-          if (error.name === 'AbortError') throw error;
+      // Create pairs of top MeSH terms
+      for (let i = 0; i < sortedTerms.length - 1 && searches.length < 4; i++) {
+        for (let j = i + 1; j < sortedTerms.length && searches.length < 4; j++) {
+          searches.push(`"${sortedTerms[i]}"[MeSH] AND "${sortedTerms[j]}"[MeSH]`);
         }
       }
       
-      throw lastError || new Error('All CORS proxies failed');
+      // Add single high-frequency MeSH terms with text words
+      if (searches.length < 4 && sortedTerms.length > 0) {
+        searches.push(`"${sortedTerms[0]}"[MeSH]`);
+      }
+      
+      return searches;
     }
 
     // Search PubMed
-    async function searchPubMed(query, maxResults = 20) {
-      const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(query)}&retmode=xml&retmax=${maxResults}&tool=AI_PubMed_Tool&email=tool@example.com&sort=relevance`;
+    async function searchPubMed(searchTerm, maxResults = 20) {
+      const url = 'https://corsproxy.io/?' + encodeURIComponent(
+        `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(searchTerm)}&retmode=xml&retmax=${maxResults}&sort=relevance`
+      );
       
-      try {
-        const resp = await cancellableFetch(url);
-        if (!resp.ok) throw new Error(`PubMed error: ${resp.status}`);
-        
-        const xmlText = await resp.text();
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-        
-        const errorNode = xmlDoc.querySelector("ERROR");
-        if (errorNode) {
-          throw new Error(`PubMed API: ${errorNode.textContent}`);
-        }
-        
-        const idElements = Array.from(xmlDoc.getElementsByTagName("Id"));
-        return idElements.map(idNode => idNode.textContent);
-      } catch (error) {
-        if (error.name !== 'AbortError') {
-          logMessage(`❌ PubMed search error: ${error.message}\n`);
-        }
-        return [];
-      }
+      const response = await fetch(url, { signal: state.abortController?.signal });
+      const text = await response.text();
+      
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(text, 'text/xml');
+      
+      const ids = Array.from(doc.getElementsByTagName('Id')).map(el => el.textContent);
+      return ids;
     }
 
     // Fetch article details
-    async function fetchPubMedDetails(pmids) {
+    async function fetchArticleDetails(pmids) {
       if (pmids.length === 0) return [];
       
-      const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${pmids.join(",")}&retmode=xml&tool=AI_PubMed_Tool&email=tool@example.com`;
+      const url = 'https://corsproxy.io/?' + encodeURIComponent(
+        `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${pmids.join(',')}&retmode=xml`
+      );
       
-      try {
-        const resp = await cancellableFetch(url);
-        if (!resp.ok) throw new Error(`PubMed fetch error: ${resp.status}`);
+      const response = await fetch(url, { signal: state.abortController?.signal });
+      const text = await response.text();
+      
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(text, 'text/xml');
+      
+      const articles = [];
+      const articleNodes = doc.getElementsByTagName('PubmedArticle');
+      
+      for (const node of articleNodes) {
+        const pmid = node.querySelector('PMID')?.textContent || '';
+        const title = node.querySelector('ArticleTitle')?.textContent || '';
+        const journal = node.querySelector('Title')?.textContent || '';
+        const year = node.querySelector('PubDate Year')?.textContent || 
+                     node.querySelector('MedlineDate')?.textContent?.substring(0, 4) || '';
         
-        const xmlText = await resp.text();
-        const xmlDoc = new DOMParser().parseFromString(xmlText, "text/xml");
-        const articleNodes = Array.from(xmlDoc.getElementsByTagName("PubmedArticle"));
+        // Get abstract
+        const abstractTexts = Array.from(node.querySelectorAll('AbstractText'));
+        const abstract = abstractTexts.map(n => n.textContent).join(' ');
         
-        return articleNodes.map(parseArticleXML);
-      } catch (error) {
-        if (error.name !== 'AbortError') {
-          logMessage(`❌ Fetch error: ${error.message}\n`);
-        }
-        return [];
-      }
-    }
-
-    // Parse article XML
-    function parseArticleXML(articleNode) {
-      function textOrDefault(elem, tag, defaultVal = "") {
-        const node = elem.getElementsByTagName(tag)[0];
-        return node && node.textContent ? node.textContent : defaultVal;
-      }
-      
-      const pmid = textOrDefault(articleNode, "PMID", "Unknown");
-      const title = textOrDefault(articleNode, "ArticleTitle", "No Title");
-      
-      const authors = Array.from(articleNode.getElementsByTagName("Author")).map(auth => {
-        const lastName = textOrDefault(auth, "LastName");
-        const foreName = textOrDefault(auth, "ForeName");
-        return lastName ? (foreName ? `${lastName}, ${foreName}` : lastName) : null;
-      }).filter(Boolean);
-      
-      const journal = textOrDefault(articleNode, "Title", "Unknown Journal");
-      
-      const pubDateNode = articleNode.getElementsByTagName("PubDate")[0];
-      let pubYear = "Unknown";
-      if (pubDateNode) {
-        pubYear = textOrDefault(pubDateNode, "Year") || 
-                  textOrDefault(pubDateNode, "MedlineDate", "Unknown").substring(0, 4);
-      }
-      
-      const abstractTexts = Array.from(articleNode.getElementsByTagName("AbstractText"))
-        .map(node => {
-          const label = node.getAttribute("Label");
-          return label ? `${label}: ${node.textContent}` : node.textContent;
-        })
-        .join(" ");
-      
-      // Extract MeSH terms - this is crucial for learning
-      const meshTerms = Array.from(articleNode.getElementsByTagName("MeshHeading"))
-        .map(heading => {
-          const descriptor = heading.getElementsByTagName("DescriptorName")[0];
-          return descriptor ? descriptor.textContent : null;
-        })
-        .filter(Boolean);
-      
-      return {
-        pmid,
-        title,
-        authors,
-        journal,
-        pub_date: pubYear,
-        abstract: abstractTexts.trim(),
-        meshTerms,
-        relevance_score: 0,
-        ai_reasoning: "",
-        found_in_iteration: 0,
-        concepts_present: []
-      };
-    }
-
-    // Get appropriate prompt
-    function getPrompt(key) {
-      if (state.customPrompts[key]) {
-        return state.customPrompts[key];
-      }
-      
-      const elementId = `prompt-${key.toLowerCase().replace(/_/g, '-')}`;
-      const element = document.getElementById(elementId);
-      if (element) {
-        return element.value;
-      }
-      
-      return DEFAULT_PROMPTS[key] || '';
-    }
-
-    // Enhanced article analysis
-    async function analyzeArticles(query, articles, concepts) {
-      if (articles.length === 0) return [];
-      
-      logMessage("🤖 Analyzing articles for relevance...\n");
-      
-      const articleInfo = articles.map((a, i) => ({
-        index: i + 1,
-        title: a.title,
-        abstract: a.abstract ? a.abstract.substring(0, 600) + "..." : "No abstract",
-        journal: a.journal,
-        year: a.pub_date,
-        meshTerms: a.meshTerms.slice(0, 10).join(', ')
-      }));
-      
-      const conceptsStr = Object.entries(concepts)
-        .map(([key, terms]) => `${key}: ${terms.join(', ')}`)
-        .join('\n');
-      
-      const prompt = getPrompt('ARTICLE_ANALYSIS')
-        .replace("{query}", query)
-        .replace("{concepts}", conceptsStr)
-        .replace("{articles}", JSON.stringify(articleInfo, null, 2));
-      
-      try {
-        const response = await callOpenAI(prompt, 0.2, 1500);
+        // Get MeSH terms - this is crucial!
+        const meshTerms = Array.from(node.querySelectorAll('MeshHeading DescriptorName'))
+          .map(n => n.textContent);
         
-        // Parse scores and concept presence
-        const lines = response.split('\n');
-        let collectingMesh = false;
-        
-        lines.forEach(line => {
-          const scoreMatch = line.match(/Article (\d+):\s*\[\[(\d+)\]\]/);
-          if (scoreMatch) {
-            const index = parseInt(scoreMatch[1]) - 1;
-            const score = parseInt(scoreMatch[2]);
-            const reasoning = line.split('-').slice(1).join('-').trim();
-            
-            if (articles[index]) {
-              articles[index].relevance_score = score;
-              articles[index].ai_reasoning = reasoning || "Relevance assessed";
-              
-              // Check which concepts are present
-              const presentConcepts = [];
-              Object.entries(concepts).forEach(([key, terms]) => {
-                const found = terms.some(term => 
-                  articles[index].title.toLowerCase().includes(term.toLowerCase()) ||
-                  articles[index].abstract.toLowerCase().includes(term.toLowerCase())
-                );
-                if (found) presentConcepts.push(key);
-              });
-              articles[index].concepts_present = presentConcepts;
-            }
-          }
-          
-          // Look for MeSH term recommendations
-          if (line.toLowerCase().includes('mesh') && line.toLowerCase().includes('term')) {
-            collectingMesh = true;
-          }
-        });
-        
-      } catch (e) {
-        logMessage(`⚠️ Analysis failed: ${e.message}. Using fallback scoring.\n`);
-        articles.forEach(a => {
-          a.relevance_score = 50;
-          a.ai_reasoning = "AI analysis unavailable";
+        articles.push({
+          pmid,
+          title,
+          journal,
+          year,
+          abstract,
+          meshTerms,
+          score: 0,
+          reasoning: ''
         });
       }
       
       return articles;
     }
 
-    // Learn MeSH terms from high-scoring articles
-    function learnMeshTermsFromArticles(articles) {
-      const meshThreshold = parseInt(document.getElementById('mesh-learning-threshold').value);
+    // Score articles with AI
+    async function scoreArticles(articles, query) {
+      if (articles.length === 0) return [];
       
-      articles.forEach(article => {
-        if (article.relevance_score >= meshThreshold && article.meshTerms) {
-          article.meshTerms.forEach(term => {
-            state.searchState.discoveredMeshTerms.add(term);
-            
-            // Track frequency
-            state.searchState.meshTermFrequency[term] = 
-              (state.searchState.meshTermFrequency[term] || 0) + 1;
-          });
-        }
-      });
+      log('🤖 Scoring articles for relevance...\n');
       
-      if (state.searchState.discoveredMeshTerms.size > 0) {
-        logMessage('\n<div class="mesh-learning-box">', true);
-        logMessage('<h5>🏷️ Discovered MeSH Terms from High-Scoring Articles:</h5>', true);
-        logMessage('<div class="synonym-list">', true);
-        
-        // Show top 10 by frequency
-        const sortedMesh = Object.entries(state.searchState.meshTermFrequency)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 10);
-        
-        sortedMesh.forEach(([term, count]) => {
-          logMessage(`<span class="synonym-tag mesh-discovered">${term} (${count})</span>`, true);
-        });
-        
-        logMessage('</div></div>\n', true);
-      }
-    }
+      const prompt = `Score these articles for relevance to: "${query}"
 
-    // Extract keywords from relevant articles
-    async function extractKeywordsFromArticles(articles, query) {
-      if (articles.length === 0) return null;
-      
-      logMessage("\n📚 Extracting keywords from relevant articles...\n");
-      
-      const articleInfo = articles.map(a => ({
-        title: a.title,
-        abstract: a.abstract ? a.abstract.substring(0, 400) : "",
-        meshTerms: a.meshTerms.join(', ')
-      }));
-      
-      const prompt = DEFAULT_PROMPTS.EXTRACT_KEYWORDS
-        .replace("{query}", query)
-        .replace("{articles}", JSON.stringify(articleInfo, null, 2));
-      
+For each article, provide a score (0-100) and brief reasoning.
+
+Articles:
+${articles.map((a, i) => `
+${i + 1}. ${a.title}
+   Journal: ${a.journal} (${a.year})
+   Abstract: ${a.abstract.substring(0, 300)}...
+`).join('\n')}
+
+Return a JSON array: [{"index": 1, "score": 85, "reasoning": "..."}, ...]`;
+
       try {
-        const response = await callOpenAI(prompt, 0.3, 600);
-        logMessage("Extracted keywords:\n" + response + "\n");
+        const response = await callOpenAI(prompt);
+        const scores = JSON.parse(response);
         
-        // Parse extracted terms
-        const extracted = {};
-        const lines = response.split('\n');
-        lines.forEach(line => {
-          if (line.includes('MESH_TERMS:') || line.includes('THERAPIES:') || 
-              line.includes('DISEASES:') || line.includes('METHODS:')) {
-            const terms = parseBracketedTerms(line);
-            const category = line.split(':')[0].toLowerCase();
-            if (terms.length > 0) {
-              extracted[category] = terms;
-            }
+        scores.forEach(s => {
+          if (articles[s.index - 1]) {
+            articles[s.index - 1].score = s.score;
+            articles[s.index - 1].reasoning = s.reasoning;
           }
         });
-        
-        return extracted;
       } catch (e) {
-        logMessage(`⚠️ Keyword extraction failed: ${e.message}\n`);
-        return null;
+        log(`⚠️ Scoring failed: ${e.message}\n`);
+        articles.forEach(a => a.score = 50);
       }
+      
+      return articles;
     }
 
-    // Build search context
-    function buildSearchContext() {
-      let context = "Search progress:\n";
+    // Learn MeSH terms from high-scoring articles
+    function learnMeshTerms(articles, threshold = 70) {
+      const goodArticles = articles.filter(a => a.score >= threshold);
       
-      state.searchState.iterationsData.slice(-3).forEach(iter => {
-        context += `\nIteration ${iter.number}:\n`;
-        context += `- Articles found: ${iter.articlesFound}\n`;
-        context += `- Best score: ${iter.bestScore || 0}\n`;
-        context += `- Search types: ${iter.searchTypes || 'standard'}\n`;
-        context += `- Successful searches: ${iter.successfulSearches || 0}/${iter.totalSearches || 0}\n`;
-        
-        if (iter.topArticles && iter.topArticles.length > 0) {
-          context += `- Top finding: "${iter.topArticles[0].title}" (score: ${iter.topArticles[0].relevance_score})\n`;
-        }
+      goodArticles.forEach(article => {
+        article.meshTerms.forEach(term => {
+          state.meshTerms[term] = (state.meshTerms[term] || 0) + 1;
+        });
       });
       
-      // Add discovered MeSH terms
-      if (state.searchState.discoveredMeshTerms.size > 0) {
-        const topMesh = Array.from(state.searchState.discoveredMeshTerms).slice(0, 5);
-        context += `\nTop discovered MeSH terms: ${topMesh.join(', ')}\n`;
+      // Display discovered MeSH terms
+      if (Object.keys(state.meshTerms).length > 0) {
+        displayMeshTerms();
       }
-      
-      // Add missing concepts
-      if (state.searchState.missingConcepts.length > 0) {
-        context += `\nMissing concepts: ${state.searchState.missingConcepts.join(', ')}\n`;
-      }
-      
-      return context;
     }
 
-    // Display search terms with status
-    async function displaySearchTerms(searchTerms, iteration, strategyLabels = []) {
-      logMessage(`\n📋 Search strategies for iteration ${iteration}:\n`);
+    // Display MeSH terms
+    function displayMeshTerms() {
+      const meshSection = document.getElementById('mesh-section');
+      const meshDisplay = document.getElementById('mesh-display');
       
-      const defaultLabels = ['MESH-BASED', 'TWO-CONCEPT', 'ADAPTIVE', 'REFINED', 'EXPLORATORY', 'RECOVERY'];
-      const labels = strategyLabels.length > 0 ? strategyLabels : defaultLabels;
+      meshSection.style.display = 'block';
       
-      for (let i = 0; i < searchTerms.length; i++) {
-        const term = searchTerms[i];
-        const label = labels[i] || `Strategy ${i + 1}`;
-        
-        let displayLine = `${i + 1}. ${label}: ${term}`;
-        
-        // Highlight if it contains discovered MeSH terms
-        let hasMesh = false;
-        state.searchState.discoveredMeshTerms.forEach(meshTerm => {
-          if (term.includes(meshTerm)) {
-            hasMesh = true;
-          }
-        });
-        
-        const className = hasMesh ? 'search-term mesh-learning-box' : 'search-term';
-        logMessage(`<div class="${className}">${displayLine}</div>`, true);
-      }
+      const sortedTerms = Object.entries(state.meshTerms)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 20);
       
-      logMessage("\n");
+      meshDisplay.innerHTML = sortedTerms
+        .map(([term, count]) => 
+          `<span class="mesh-term">${term}<span class="mesh-term-count">${count}</span></span>`
+        )
+        .join('');
     }
 
     // Main search function
-    async function runIterativeSearch(query) {
-      toggleUI(true);
-      resetSearchState();
+    async function performSearch() {
+      state.query = document.getElementById('query-input').value.trim();
+      state.apiKey = document.getElementById('api-key').value.trim();
+      state.model = document.getElementById('model-select').value;
+      
+      if (!state.query || !state.apiKey) {
+        alert('Please enter both a query and API key');
+        return;
+      }
+      
+      // Reset state
+      state.articles = {};
+      state.meshTerms = {};
+      state.searchHistory = [];
+      state.iterations = [];
       state.abortController = new AbortController();
       
-      clearAllDisplays();
+      // Clear displays
+      document.getElementById('search-log').innerHTML = '';
+      document.getElementById('mesh-section').style.display = 'none';
+      document.getElementById('results-section').style.display = 'none';
       
-      logMessage(`🚀 Starting adaptive search for: "${query}"\n`);
-      logMessage("=" + "=".repeat(60) + "\n\n");
+      // UI state
+      document.getElementById('start-btn').style.display = 'none';
+      document.getElementById('cancel-btn').style.display = 'inline-block';
+      state.isSearching = true;
       
       try {
-        // Step 1: Analyze query concepts
-        const concepts = await analyzeQueryConcepts(query);
+        log(`🚀 Starting smart search for: "${state.query}"\n`);
+        log(`${'='.repeat(60)}\n\n`);
         
-        // Track which concepts we're looking for
-        state.searchState.targetConcepts = concepts;
+        // Extract concepts
+        const concepts = await extractConcepts(state.query);
         
-        // Main iteration loop
-        for (let iter = 1; iter <= state.config.totalIterations; iter++) {
-          if (state.abortController.signal.aborted) {
-            throw new Error("Search cancelled");
-          }
+        const maxIterations = parseInt(document.getElementById('iterations').value);
+        const articlesPerSearch = parseInt(document.getElementById('articles-per-search').value);
+        
+        for (let iter = 1; iter <= maxIterations; iter++) {
+          if (state.abortController.signal.aborted) break;
           
-          logMessage(`\n${"=".repeat(60)}\n`);
-          logMessage(`🔄 ITERATION ${iter} of ${state.config.totalIterations}\n`);
-          logMessage(`${"=".repeat(60)}\n`);
+          log(`\n🔄 ITERATION ${iter}/${maxIterations}\n`);
+          log(`${'='.repeat(40)}\n`);
           
-          // Generate search terms based on iteration and what we've learned
-          let searchTerms = [];
-          let searchTypes = [];
+          let searches = [];
           
           if (iter === 1) {
-            // First iteration: start with two-concept searches if enabled
-            if (document.getElementById('use-two-concept').checked) {
-              logMessage("📊 Starting with two-concept broad searches\n");
-              const twoConceptSearches = await generateTwoConceptSearches(query, concepts);
-              searchTerms.push(...twoConceptSearches);
-              searchTypes.push('two-concept');
-            } else {
-              // Traditional systematic combinations
-              searchTerms = generateSystematicSearches(concepts);
-              searchTypes.push('systematic');
-            }
+            // First iteration: two-concept searches
+            log('📋 Strategy: Two-concept broad searches\n\n');
+            searches = generateTwoConceptSearches(concepts);
+          } else if (Object.keys(state.meshTerms).length >= 4) {
+            // Later iterations: use discovered MeSH terms
+            log('📋 Strategy: MeSH-based searches from learned terms\n\n');
+            searches = generateMeshSearches(state.meshTerms);
+            
+            // Also add a refined two-concept search
+            const refinedSearch = generateTwoConceptSearches(concepts).slice(0, 1);
+            searches.push(...refinedSearch);
           } else {
-            // Later iterations: adaptive approach
-            
-            // 1. Try MeSH-based searches if we've discovered terms
-            if (document.getElementById('learn-mesh').checked && 
-                state.searchState.discoveredMeshTerms.size > 0) {
-              const meshSearches = await generateMeshBasedSearches(query, state.searchState.discoveredMeshTerms);
-              if (meshSearches.length > 0) {
-                searchTerms.push(...meshSearches.slice(0, 3));
-                searchTypes.push('mesh-learned');
-                logMessage("🏷️ Using MeSH terms learned from successful results\n");
-              }
-            }
-            
-            // 2. Add adaptive searches
-            const adaptiveSearches = await generateAdaptiveSearchTerms(query, iter, concepts);
-            searchTerms.push(...adaptiveSearches);
-            searchTypes.push('adaptive');
-            
-            // 3. Check if we need recovery mode
-            const lastIter = state.searchState.iterationsData[iter - 2];
-            if (lastIter && lastIter.articlesFound < 5) {
-              logMessage("⚠️ Low yield in previous iteration - adding two-concept recovery searches\n");
-              const recoverySearches = await generateTwoConceptSearches(query, concepts);
-              searchTerms.push(...recoverySearches.slice(0, 2));
-              searchTypes.push('recovery');
-            }
+            // Fallback: continue with two-concept searches
+            log('📋 Strategy: Continuing with two-concept searches\n\n');
+            searches = generateTwoConceptSearches(concepts);
           }
           
-          // Deduplicate search terms
-          searchTerms = [...new Set(searchTerms)];
-          
-          // Display search strategies
-          await displaySearchTerms(searchTerms, iter);
-          
           // Execute searches
-          logMessage("\n🔍 Executing searches...\n");
-          const allPmids = [];
-          const articlesPerSearch = Math.ceil(state.config.articlesPerIteration / searchTerms.length);
-          let successfulSearches = 0;
+          const iterationPmids = [];
           
-          for (let i = 0; i < searchTerms.length; i++) {
-            const term = searchTerms[i];
-            logMessage(`  Search ${i + 1}: `);
+          for (const search of searches) {
+            log(`<div class="search-item">🔍 ${search}</div>`, true);
             
             try {
-              const pmids = await searchPubMed(term, articlesPerSearch + 10);
+              const pmids = await searchPubMed(search, articlesPerSearch);
               
               if (pmids.length > 0) {
-                allPmids.push(...pmids);
-                logMessage(`<span class="search-term-success">✅ Found ${pmids.length} articles</span>\n`, true);
-                
-                // Track successful pattern
-                state.searchState.searchPatterns.successful.push({
-                  query: term,
-                  results: pmids.length,
-                  iteration: iter,
-                  type: searchTypes[Math.floor(i / (searchTerms.length / searchTypes.length))]
-                });
-                successfulSearches++;
-                
-                // Extract components for learning
-                const components = term.split(/\s+AND\s+/i);
-                components.forEach(comp => {
-                  const cleanComp = comp.replace(/[()"\[\]]/g, '').trim();
-                  if (cleanComp.length > 3 && !cleanComp.includes('MeSH')) {
-                    state.searchState.successfulTerms.add(cleanComp);
-                  }
-                });
+                log(`<div class="search-success">✅ Found ${pmids.length} articles</div>`, true);
+                iterationPmids.push(...pmids);
+                state.searchHistory.push({ search, success: true, count: pmids.length });
               } else {
-                logMessage(`<span class="search-term-failed">❌ No results</span>\n`, true);
-                state.searchState.failedSearches.push(term);
-                
-                // If adaptive search is enabled and this was a multi-concept search, try recovery
-                if (document.getElementById('adaptive-search').checked) {
-                  const components = term.split(/\s+AND\s+/i).map(c => c.trim());
-                  if (components.length > 2) {
-                    logMessage("    → Attempting two-concept recovery...\n");
-                    
-                    // Try the two most important concepts
-                    const recoverySearch = `${components[0]} AND ${components[1]}`;
-                    const recoveryPmids = await searchPubMed(recoverySearch, 10);
-                    
-                    if (recoveryPmids.length > 0) {
-                      allPmids.push(...recoveryPmids);
-                      logMessage(`    → Recovery successful: found ${recoveryPmids.length} articles\n`);
-                      successfulSearches += 0.5; // Partial credit
-                    }
-                  }
-                }
+                log(`<div class="search-failed">❌ No results</div>`, true);
+                state.searchHistory.push({ search, success: false, count: 0 });
               }
-            } catch (searchError) {
-              logMessage(`❌ Error: ${searchError.message}\n`);
-              state.searchState.failedSearches.push(term);
+              
+              // Rate limiting
+              await new Promise(resolve => setTimeout(resolve, 400));
+              
+            } catch (error) {
+              log(`<div class="search-failed">❌ Error: ${error.message}</div>`, true);
             }
-            
-            // Rate limiting
-            await new Promise(resolve => 
-              setTimeout(resolve, parseInt(document.getElementById('rate-limit').value))
-            );
           }
           
           // Process unique PMIDs
-          const uniquePmids = [...new Set(allPmids)];
-          logMessage(`\n📊 Total unique articles found: ${uniquePmids.length}\n`);
-          logMessage(`   Successful searches: ${successfulSearches}/${searchTerms.length}\n`);
+          const uniquePmids = [...new Set(iterationPmids)];
+          const newPmids = uniquePmids.filter(id => !state.articles[id]);
           
-          if (uniquePmids.length === 0) {
-            logMessage("⚠️ No articles found this iteration.\n");
-            
-            // Identify missing concepts
-            state.searchState.missingConcepts = Object.entries(concepts)
-              .filter(([key, terms]) => {
-                return terms.length > 0 && !state.searchState.successfulTerms.has(terms[0]);
-              })
-              .map(([key]) => key);
-            
-            logMessage(`   Missing concepts: ${state.searchState.missingConcepts.join(', ')}\n`);
-            continue;
-          }
+          log(`\n📊 Found ${uniquePmids.length} articles (${newPmids.length} new)\n`);
           
-          // Fetch new articles
-          const newPmids = uniquePmids.filter(pmid => !state.searchState.allArticles[pmid]);
           if (newPmids.length > 0) {
-            logMessage(`📥 Fetching details for ${newPmids.length} new articles...\n`);
-            try {
-              const newArticles = await fetchPubMedDetails(newPmids);
-              
-              newArticles.forEach(article => {
-                article.found_in_iteration = iter;
-                state.searchState.allArticles[article.pmid] = article;
-              });
-            } catch (fetchError) {
-              logMessage(`❌ Error fetching article details: ${fetchError.message}\n`);
-            }
-          }
-          
-          // Get current iteration's articles
-          const currentArticles = uniquePmids
-            .map(pmid => state.searchState.allArticles[pmid])
-            .filter(Boolean);
-          
-          // Analyze articles with concept tracking
-          const analyzedArticles = await analyzeArticles(query, currentArticles, concepts);
-          
-          // Sort by relevance
-          analyzedArticles.sort((a, b) => b.relevance_score - a.relevance_score);
-          
-          // Learn MeSH terms from high-scoring articles
-          if (document.getElementById('learn-mesh').checked) {
-            learnMeshTermsFromArticles(analyzedArticles);
-          }
-          
-          // Extract keywords from high-scoring articles
-          const highScoringArticles = analyzedArticles.filter(a => 
-            a.relevance_score >= parseInt(document.getElementById('high-relevance').value)
-          );
-          
-          if (highScoringArticles.length > 0 && document.getElementById('explore-related').checked) {
-            const extractedKeywords = await extractKeywordsFromArticles(
-              highScoringArticles.slice(0, 5), 
-              query
-            );
+            // Fetch details
+            log('📥 Fetching article details...\n');
+            const newArticles = await fetchArticleDetails(newPmids);
             
-            // Add to related findings
-            if (extractedKeywords) {
-              if (extractedKeywords.therapies) {
-                extractedKeywords.therapies.forEach(therapy => {
-                  if (!concepts.therapy.some(t => t.toLowerCase() === therapy.toLowerCase())) {
-                    state.searchState.relatedFindings.push(`Related therapy: ${therapy}`);
-                  }
-                });
-              }
-              if (extractedKeywords.diseases) {
-                extractedKeywords.diseases.forEach(disease => {
-                  if (!concepts.disease.some(d => d.toLowerCase() === disease.toLowerCase())) {
-                    state.searchState.relatedFindings.push(`Related condition: ${disease}`);
-                  }
-                });
-              }
+            // Score articles
+            const scoredArticles = await scoreArticles(newArticles, state.query);
+            
+            // Store articles
+            scoredArticles.forEach(article => {
+              article.iteration = iter;
+              state.articles[article.pmid] = article;
+            });
+            
+            // Learn MeSH terms from good articles
+            learnMeshTerms(scoredArticles);
+            
+            // Show top articles from this iteration
+            const topArticles = scoredArticles.sort((a, b) => b.score - a.score).slice(0, 3);
+            
+            if (topArticles.length > 0) {
+              log('\n🏆 Top articles this iteration:\n');
+              topArticles.forEach((article, i) => {
+                const scoreClass = article.score >= 80 ? 'score-high' : 
+                                 article.score >= 60 ? 'score-medium' : 'score-low';
+                log(`${i + 1}. ${article.title}\n`);
+                log(`   <span class="${scoreClass}">Score: ${article.score}/100</span> - ${article.reasoning}\n`, true);
+              });
             }
           }
           
-          // Display top articles
-          const topArticles = analyzedArticles.slice(0, state.config.topArticlesPerIteration);
-          displayIterationResults(iter, topArticles);
-          
-          // Store iteration data
-          state.searchState.iterationsData.push({
-            number: iter,
-            searchTerms,
-            searchTypes: searchTypes.join(', '),
-            articlesFound: uniquePmids.length,
-            newArticles: newPmids.length,
-            bestScore: topArticles[0]?.relevance_score || 0,
-            topArticles,
-            successfulSearches,
-            totalSearches: searchTerms.length
-          });
-          
-          // Check if we're finding what we need
-          if (iter > 1 && topArticles[0]?.relevance_score < 40) {
-            logMessage("\n⚠️ Low relevance scores - search strategy will adapt further...\n");
-          }
+          // Brief pause between iterations
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
         
-        // Finalize results
-        await finalizeResults(query);
+        // Display final results
+        displayResults();
+        
+        log(`\n✅ Search complete! Found ${Object.keys(state.articles).length} unique articles.\n`);
         
       } catch (error) {
-        handleSearchError(error);
+        if (error.name !== 'AbortError') {
+          log(`\n❌ Error: ${error.message}\n`);
+        }
       } finally {
-        toggleUI(false);
+        state.isSearching = false;
+        document.getElementById('start-btn').style.display = 'inline-block';
+        document.getElementById('cancel-btn').style.display = 'none';
       }
     }
 
-    // Generate systematic search combinations (helper function)
-    function generateSystematicSearches(concepts) {
-      const searches = [];
+    // Display results
+    function displayResults() {
+      const resultsSection = document.getElementById('results-section');
+      resultsSection.style.display = 'block';
       
-      // Helper to get first non-empty concept
-      const getFirst = (arr) => arr && arr.length > 0 ? arr[0] : null;
+      const allArticles = Object.values(state.articles);
+      const sortedArticles = allArticles.sort((a, b) => b.score - a.score);
       
-      // 1. Full combination of primary terms
-      const primary = [
-        getFirst(concepts.therapy),
-        getFirst(concepts.disease),
-        getFirst(concepts.tissue),
-        getFirst(concepts.method)
-      ].filter(Boolean);
+      // Top articles
+      const topDiv = document.getElementById('top-articles');
+      topDiv.innerHTML = '';
       
-      if (primary.length >= 3) {
-        searches.push(primary.join(' AND '));
-      }
-      
-      // 2. Two-concept combinations
-      const conceptPairs = [
-        [concepts.therapy, concepts.disease],
-        [concepts.therapy, concepts.method],
-        [concepts.disease, concepts.method],
-        [concepts.therapy, concepts.tissue],
-        [concepts.disease, concepts.tissue]
-      ];
-      
-      conceptPairs.forEach(([c1, c2]) => {
-        if (c1.length > 0 && c2.length > 0) {
-          // Use OR for flexibility
-          const search = `(${c1.slice(0, 2).join(' OR ')}) AND (${c2.slice(0, 2).join(' OR ')})`;
-          searches.push(search);
-        }
+      sortedArticles.slice(0, 10).forEach((article, i) => {
+        const scoreClass = article.score >= 80 ? 'score-high' : 
+                         article.score >= 60 ? 'score-medium' : 'score-low';
+        
+        const html = `
+          <div class="article-result">
+            <h4>#${i + 1}: ${article.title}</h4>
+            <div>
+              <strong>Journal:</strong> ${article.journal} (${article.year}) | 
+              <strong>PMID:</strong> ${article.pmid} | 
+              <strong class="${scoreClass}">Score: ${article.score}/100</strong> | 
+              <strong>Iteration:</strong> ${article.iteration}
+            </div>
+            <div><strong>URL:</strong> <a href="https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/" target="_blank">View on PubMed</a></div>
+            <div><strong>Reasoning:</strong> ${article.reasoning}</div>
+            ${article.meshTerms.length > 0 ? `<div><strong>MeSH Terms:</strong> ${article.meshTerms.slice(0, 5).join(', ')}</div>` : ''}
+            ${article.abstract ? `<div style="margin-top: 10px;"><strong>Abstract:</strong> ${article.abstract.substring(0, 300)}...</div>` : ''}
+          </div>
+        `;
+        
+        topDiv.innerHTML += html;
       });
       
-      return searches.filter(s => s && s.length > 10).slice(0, 6);
-    }
-
-    // Display iteration results with concept tracking
-    function displayIterationResults(iteration, topArticles) {
-      logMessage(`\n🏆 Top articles for iteration ${iteration}:\n`);
+      // All articles summary
+      const allDiv = document.getElementById('all-articles');
+      allDiv.textContent = `COMPLETE RANKINGS (${sortedArticles.length} articles)\n${'='.repeat(50)}\n\n`;
       
-      const minScore = parseInt(document.getElementById('min-relevance').value);
-      
-      topArticles.slice(0, 5).forEach((article, i) => {
-        if (article.relevance_score >= minScore) {
-          const scoreClass = article.relevance_score >= 80 ? 'score-excellent' :
-                           article.relevance_score >= 60 ? 'score-good' :
-                           article.relevance_score >= 40 ? 'score-medium' : 'score-poor';
-          
-          logMessage(`\n${i + 1}. ${article.title}\n`);
-          logMessage(`   <span class="${scoreClass}">Score: ${article.relevance_score}/100</span>\n`, true);
-          logMessage(`   ${article.ai_reasoning}\n`);
-          
-          if (article.concepts_present && article.concepts_present.length > 0) {
-            logMessage(`   Concepts present: ${article.concepts_present.join(', ')}\n`);
-          }
-          
-          // Show key MeSH terms for learning
-          if (article.meshTerms && article.meshTerms.length > 0 && article.relevance_score >= 60) {
-            logMessage(`   Key MeSH terms: ${article.meshTerms.slice(0, 5).join(', ')}\n`);
-          }
-        }
+      sortedArticles.forEach((article, i) => {
+        allDiv.textContent += `${i + 1}. ${article.title}\n`;
+        allDiv.textContent += `   ${article.journal} (${article.year}) | PMID: ${article.pmid} | Score: ${article.score} | Iteration: ${article.iteration}\n\n`;
       });
     }
 
-    // Finalize results with gap analysis
-    async function finalizeResults(query) {
-      const allArticles = Object.values(state.searchState.allArticles);
+    // Generate summary
+    async function generateSummary() {
+      const summaryDiv = document.getElementById('summary');
+      summaryDiv.style.display = 'block';
+      summaryDiv.textContent = 'Generating summary...';
       
-      if (allArticles.length === 0) {
-        logMessage("\n⚠️ No articles found in the entire search.\n");
-        return;
-      }
-      
-      logMessage(`\n\n${"=".repeat(60)}\n`);
-      logMessage(`🎯 FINALIZING RESULTS\n`);
-      logMessage(`${"=".repeat(60)}\n`);
-      
-      // Sort by relevance
-      state.searchState.finalRanking = allArticles
-        .sort((a, b) => b.relevance_score - a.relevance_score);
-      
-      // Analyze literature gaps
-      await analyzeLiteratureGaps(query);
-      
-      // Display results
-      displayFinalResults();
-      generateSearchSummary(query);
-      
-      logMessage("\n✅ Search completed!\n");
-    }
-
-    // Analyze literature gaps
-    async function analyzeLiteratureGaps(query) {
-      logMessage("\n📊 Analyzing literature gaps...\n");
-      
-      const highScoring = state.searchState.finalRanking.filter(a => a.relevance_score >= 60);
-      const foundTopics = highScoring.map(a => a.title).slice(0, 5);
-      const failedQueries = state.searchState.failedSearches.slice(0, 10);
-      const meshTerms = Array.from(state.searchState.discoveredMeshTerms).slice(0, 15);
-      
-      const prompt = DEFAULT_PROMPTS.LITERATURE_GAP_ANALYSIS
-        .replace("{query}", query)
-        .replace("{found_topics}", foundTopics.join('\n'))
-        .replace("{failed_queries}", failedQueries.join('\n'))
-        .replace("{mesh_terms}", meshTerms.join(', '));
-      
-      try {
-        const analysis = await callOpenAI(prompt, 0.3, 800);
-        logMessage("\nLiterature Gap Analysis:\n");
-        logMessage(analysis + "\n");
-        
-        state.searchState.gapAnalysis = analysis;
-      } catch (e) {
-        logMessage(`⚠️ Gap analysis failed: ${e.message}\n`);
-      }
-    }
-
-    // Display final results
-    function displayFinalResults() {
-      const resultsDiv = document.getElementById("results");
-      const topArticles = state.searchState.finalRanking.slice(0, 15);
-      
-      let html = '<h3>Top Articles Found</h3>\n';
-      
-      // Show discovered MeSH terms summary
-      if (state.searchState.discoveredMeshTerms.size > 0) {
-        html += '<div class="mesh-learning-box">';
-        html += '<h4>🏷️ Key MeSH Terms Discovered</h4>';
-        html += '<div class="synonym-list">';
-        
-        const topMesh = Object.entries(state.searchState.meshTermFrequency)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 15);
-        
-        topMesh.forEach(([term, count]) => {
-          html += `<span class="synonym-tag mesh-discovered">${escapeHtml(term)} (${count})</span>`;
-        });
-        
-        html += '</div></div>';
-      }
-      
-      // Add gap analysis if available
-      if (state.searchState.gapAnalysis) {
-        html += '<div class="info-box">';
-        html += '<h4>Literature Gap Analysis</h4>';
-        html += `<pre style="white-space: pre-wrap;">${escapeHtml(state.searchState.gapAnalysis)}</pre>`;
-        html += '</div>';
-      }
-      
-      topArticles.forEach((article, i) => {
-        const scoreClass = article.relevance_score >= 80 ? 'score-excellent' :
-                         article.relevance_score >= 60 ? 'score-good' :
-                         article.relevance_score >= 40 ? 'score-medium' : 'score-poor';
-        
-        html += `<div class="article-result">`;
-        html += `<h4>#${i + 1}: ${escapeHtml(article.title)}</h4>`;
-        html += `<div class="article-metadata">`;
-        html += `<strong>Authors:</strong> ${article.authors.slice(0, 3).join(", ")}`;
-        if (article.authors.length > 3) html += ` + ${article.authors.length - 3} more`;
-        html += `<br><strong>Journal:</strong> ${escapeHtml(article.journal)} (${article.pub_date})`;
-        html += `<br><strong>PMID:</strong> ${article.pmid}`;
-        html += ` | <strong class="${scoreClass}">Score: ${article.relevance_score}/100</strong>`;
-        html += ` | <strong>Found in iteration:</strong> ${article.found_in_iteration}`;
-        html += `<br><strong>URL:</strong> <a href="https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/" target="_blank">View on PubMed</a>`;
-        html += `<br><strong>AI Assessment:</strong> ${escapeHtml(article.ai_reasoning)}`;
-        
-        if (article.concepts_present && article.concepts_present.length > 0) {
-          html += `<br><strong>Concepts found:</strong> ${article.concepts_present.join(', ')}`;
-        }
-        
-        if (article.meshTerms && article.meshTerms.length > 0) {
-          html += `<br><strong>MeSH terms:</strong> ${article.meshTerms.slice(0, 8).join(', ')}`;
-        }
-        
-        html += `</div>`;
-        
-        if (article.abstract) {
-          html += `<div class="article-abstract">`;
-          html += `<strong>Abstract:</strong><br>${escapeHtml(article.abstract)}`;
-          html += `</div>`;
-        }
-        
-        html += `</div>`;
-      });
-      
-      resultsDiv.innerHTML = html;
-      
-      // Rankings
-      const rankingsDiv = document.getElementById("rankings");
-      let rankingsText = `COMPLETE ARTICLE RANKINGS\n${"=".repeat(50)}\n\n`;
-      
-      state.searchState.finalRanking.forEach((article, i) => {
-        rankingsText += `${i + 1}. ${article.title}\n`;
-        rankingsText += `   PMID: ${article.pmid} | Score: ${article.relevance_score} | Iteration: ${article.found_in_iteration}\n`;
-        rankingsText += `   Concepts: ${article.concepts_present?.join(', ') || 'N/A'}\n`;
-        if (article.meshTerms && article.meshTerms.length > 0) {
-          rankingsText += `   MeSH: ${article.meshTerms.slice(0, 5).join(', ')}\n`;
-        }
-        rankingsText += '\n';
-      });
-      
-      rankingsDiv.textContent = rankingsText;
-    }
-
-    // Generate search summary with insights
-    async function generateSearchSummary(query) {
-      const evolutionDiv = document.getElementById("evolution");
-      
-      let summaryText = `SEARCH EVOLUTION\n${"=".repeat(50)}\n\n`;
-      summaryText += `Query: "${query}"\n`;
-      summaryText += `Total iterations: ${state.searchState.iterationsData.length}\n`;
-      summaryText += `Total unique articles: ${Object.keys(state.searchState.allArticles).length}\n`;
-      summaryText += `Articles in final ranking: ${state.searchState.finalRanking.length}\n\n`;
-      
-      // Concept coverage
-      if (state.searchState.conceptAnalysis) {
-        summaryText += `Concepts searched:\n`;
-        Object.entries(state.searchState.conceptAnalysis).forEach(([key, terms]) => {
-          if (terms.length > 0) {
-            summaryText += `  ${key.toUpperCase()}: ${terms.join(', ')}\n`;
-          }
-        });
-        summaryText += '\n';
-      }
-      
-      // MeSH term discovery
-      if (state.searchState.discoveredMeshTerms.size > 0) {
-        summaryText += `Discovered ${state.searchState.discoveredMeshTerms.size} unique MeSH terms\n`;
-        summaryText += `Top MeSH terms by frequency:\n`;
-        
-        const topMesh = Object.entries(state.searchState.meshTermFrequency)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 10);
-        
-        topMesh.forEach(([term, count]) => {
-          summaryText += `  • ${term} (appeared ${count} times)\n`;
-        });
-        summaryText += '\n';
-      }
-      
-      // Best strategies
-      const bestPatterns = state.searchState.searchPatterns.successful
-        .sort((a, b) => b.results - a.results)
+      const topArticles = Object.values(state.articles)
+        .sort((a, b) => b.score - a.score)
         .slice(0, 5);
       
-      if (bestPatterns.length > 0) {
-        summaryText += `Most productive search patterns:\n`;
-        bestPatterns.forEach((pattern, i) => {
-          summaryText += `${i + 1}. [${pattern.type}] "${pattern.query}" - ${pattern.results} results (iteration ${pattern.iteration})\n`;
-        });
-        summaryText += '\n';
-      }
-      
-      // Related findings
-      if (state.searchState.relatedFindings.length > 0) {
-        summaryText += `Related discoveries:\n`;
-        [...new Set(state.searchState.relatedFindings)].forEach(finding => {
-          summaryText += `  • ${finding}\n`;
-        });
-        summaryText += '\n';
-      }
-      
-      // Iteration breakdown
-      summaryText += `Iteration breakdown:\n`;
-      state.searchState.iterationsData.forEach(iter => {
-        summaryText += `\nIteration ${iter.number}:\n`;
-        summaryText += `  • Articles found: ${iter.articlesFound} (${iter.newArticles} new)\n`;
-        summaryText += `  • Best score: ${iter.bestScore}\n`;
-        summaryText += `  • Search types: ${iter.searchTypes}\n`;
-        summaryText += `  • Successful searches: ${iter.successfulSearches}/${iter.totalSearches}\n`;
-        
-        if (iter.topArticles && iter.topArticles[0]) {
-          summaryText += `  • Top finding: "${iter.topArticles[0].title.substring(0, 60)}..."\n`;
-        }
-      });
-      
-      evolutionDiv.textContent = summaryText;
-    }
+      const prompt = `Summarize these top research articles related to: "${state.query}"
 
-    // Generate abstract summary
-    async function generateAbstractSummary() {
-      if (!state.searchState.finalRanking || state.searchState.finalRanking.length === 0) {
-        alert("No results to summarize.");
-        return;
-      }
-      
-      const count = parseInt(document.getElementById("summary-count").value);
-      const topArticles = state.searchState.finalRanking.slice(0, count);
-      
-      const summaryDiv = document.getElementById("summary");
-      summaryDiv.textContent = "Generating summary...";
-      
-      let abstractsText = "";
-      topArticles.forEach((article, i) => {
-        abstractsText += `\nArticle ${i + 1}: ${article.title}\n`;
-        abstractsText += `Authors: ${article.authors.slice(0, 3).join(", ")}\n`;
-        abstractsText += `Journal: ${article.journal} (${article.pub_date})\n`;
-        abstractsText += `Relevance Score: ${article.relevance_score}/100\n`;
-        abstractsText += `MeSH Terms: ${article.meshTerms.slice(0, 5).join(', ')}\n`;
-        abstractsText += `Abstract: ${article.abstract || "Not available"}\n`;
-        abstractsText += "-".repeat(80) + "\n";
-      });
-      
-      const prompt = `Analyze and synthesize these research articles related to: "${document.getElementById("query-input").value}"
-
-${abstractsText}
+${topArticles.map((a, i) => `
+Article ${i + 1}: ${a.title}
+Journal: ${a.journal} (${a.year})
+Abstract: ${a.abstract}
+`).join('\n---\n')}
 
 Provide:
-1. KEY FINDINGS: Main discoveries relevant to the query
-2. METHODS: Common approaches and techniques used
-3. KNOWLEDGE GAPS: What aspects of the query remain unstudied
-4. CLINICAL/BIOLOGICAL RELEVANCE: Practical implications
-5. FUTURE DIRECTIONS: Suggested research areas based on gaps
+1. KEY FINDINGS: Main discoveries across the articles
+2. METHODS: Common approaches used
+3. CLINICAL RELEVANCE: Practical implications
+4. GAPS: What's still unknown
 
-Be specific about which findings come from which papers (cite by article number).`;
-      
+Keep it concise but comprehensive.`;
+
       try {
-        const summary = await callOpenAI(prompt, 0.3, 1500);
+        const summary = await callOpenAI(prompt, 0.3);
         summaryDiv.textContent = summary;
-      } catch (e) {
-        summaryDiv.textContent = `Error: ${e.message}`;
-      }
-    }
-
-    // Handle errors
-    function handleSearchError(error) {
-      if (error.name === 'AbortError' || error.message === 'Search cancelled') {
-        logMessage("\n\n❌ Search cancelled by user.\n");
-      } else {
-        logMessage(`\n\n❌ Error: ${error.message}\n`);
-      }
-    }
-
-    // Clear displays
-    function clearAllDisplays() {
-      ['iteration-log', 'results', 'summary', 'evolution', 'rankings'].forEach(id => {
-        const element = document.getElementById(id);
-        if (element) {
-          element.textContent = '';
-          element.innerHTML = '';
-        }
-      });
-    }
-
-    // Reset search state
-    function resetSearchState() {
-      state.searchState = {
-        allArticles: {},
-        iterationsData: [],
-        finalRanking: [],
-        meshTermsValidated: {},
-        searchHistory: [],
-        successfulTerms: new Set(),
-        failedSearches: [],
-        conceptAnalysis: null,
-        searchPatterns: {
-          successful: [],
-          failed: []
-        },
-        relatedFindings: [],
-        missingConcepts: [],
-        discoveredMeshTerms: new Set(),
-        meshTermFrequency: {},
-        gapAnalysis: null
-      };
-      tokenCounter.reset();
-      updateTokenDisplay();
-    }
-
-    // Toggle UI
-    function toggleUI(isSearching) {
-      document.getElementById("start-btn").disabled = isSearching;
-      document.getElementById("start-btn").style.display = isSearching ? 'none' : 'inline-block';
-      document.getElementById("cancel-btn").style.display = isSearching ? 'inline-block' : 'none';
-      
-      const inputs = document.querySelectorAll('input:not(#test-api-btn), select, textarea');
-      inputs.forEach(el => el.disabled = isSearching);
-    }
-
-    // Export results
-    function exportResults(format) {
-      if (!state.searchState.finalRanking || state.searchState.finalRanking.length === 0) {
-        alert("No results to export.");
-        return;
-      }
-      
-      let content = '';
-      let filename = `pubmed_results_${new Date().toISOString().split('T')[0]}`;
-      let mimeType = 'text/plain';
-      
-      if (format === 'json') {
-        content = JSON.stringify({
-          query: document.getElementById("query-input").value,
-          date: new Date().toISOString(),
-          results: state.searchState.finalRanking,
-          searchHistory: state.searchState.searchHistory,
-          conceptAnalysis: state.searchState.conceptAnalysis,
-          discoveredMeshTerms: Array.from(state.searchState.discoveredMeshTerms),
-          meshTermFrequency: state.searchState.meshTermFrequency,
-          gapAnalysis: state.searchState.gapAnalysis,
-          relatedFindings: state.searchState.relatedFindings,
-          searchPatterns: state.searchState.searchPatterns,
-          tokenUsage: {
-            input: tokenCounter.inputTokens,
-            output: tokenCounter.outputTokens,
-            cost: tokenCounter.getCostEstimate(state.config.modelChoice)
-          }
-        }, null, 2);
-        filename += '.json';
-        mimeType = 'application/json';
-      } else if (format === 'csv') {
-        content = 'Rank,PMID,Title,Authors,Journal,Year,Score,Concepts,MeSH Terms,URL\n';
-        state.searchState.finalRanking.forEach((article, i) => {
-          content += `${i + 1},`;
-          content += `"${article.pmid}",`;
-          content += `"${article.title.replace(/"/g, '""')}",`;
-          content += `"${article.authors.slice(0, 3).join('; ')}",`;
-          content += `"${article.journal.replace(/"/g, '""')}",`;
-          content += `${article.pub_date},`;
-          content += `${article.relevance_score},`;
-          content += `"${(article.concepts_present || []).join('; ')}",`;
-          content += `"${(article.meshTerms || []).slice(0, 5).join('; ')}",`;
-          content += `https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/\n`;
-        });
-        filename += '.csv';
-        mimeType = 'text/csv';
-      } else if (format === 'bibtex') {
-        state.searchState.finalRanking.forEach((article, i) => {
-          content += `@article{pmid${article.pmid},\n`;
-          content += `  title={${article.title}},\n`;
-          content += `  author={${article.authors.join(' and ')}},\n`;
-          content += `  journal={${article.journal}},\n`;
-          content += `  year={${article.pub_date}},\n`;
-          content += `  pmid={${article.pmid}},\n`;
-          content += `  keywords={${article.meshTerms.slice(0, 5).join('; ')}}\n`;
-          content += `}\n\n`;
-        });
-        filename += '.bib';
-        mimeType = 'text/plain';
-      } else {
-        // Text format
-        content = `PUBMED SEARCH RESULTS\n`;
-        content += `${"=".repeat(60)}\n\n`;
-        content += `Query: ${document.getElementById("query-input").value}\n`;
-        content += `Date: ${new Date().toLocaleString()}\n`;
-        content += `Total Results: ${state.searchState.finalRanking.length}\n\n`;
-        
-        if (state.searchState.discoveredMeshTerms.size > 0) {
-          content += `KEY MESH TERMS DISCOVERED:\n`;
-          const topMesh = Object.entries(state.searchState.meshTermFrequency)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 15);
-          topMesh.forEach(([term, count]) => {
-            content += `  • ${term} (${count} occurrences)\n`;
-          });
-          content += '\n';
-        }
-        
-        if (state.searchState.gapAnalysis) {
-          content += `LITERATURE GAP ANALYSIS:\n${state.searchState.gapAnalysis}\n\n`;
-          content += `${"=".repeat(60)}\n\n`;
-        }
-        
-        state.searchState.finalRanking.forEach((article, i) => {
-          content += `${i + 1}. ${article.title}\n`;
-          content += `   Authors: ${article.authors.join(', ')}\n`;
-          content += `   Journal: ${article.journal} (${article.pub_date})\n`;
-          content += `   PMID: ${article.pmid}\n`;
-          content += `   Score: ${article.relevance_score}/100\n`;
-          content += `   Concepts: ${(article.concepts_present || []).join(', ')}\n`;
-          content += `   MeSH Terms: ${(article.meshTerms || []).slice(0, 8).join(', ')}\n`;
-          content += `   URL: https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/\n`;
-          content += `   Abstract: ${article.abstract || 'Not available'}\n`;
-          content += `\n${"-".repeat(60)}\n\n`;
-        });
-        
-        filename += '.txt';
-      }
-      
-      // Download
-      const blob = new Blob([content], { type: mimeType });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-
-    // Test API key
-    async function testAPIKey() {
-      const apiKey = document.getElementById("api-key").value.trim();
-      const resultDiv = document.getElementById("api-test-result");
-      
-      if (!apiKey) {
-        resultDiv.innerHTML = '<div class="api-test-result api-test-failure">❌ Please enter an API key</div>';
-        return;
-      }
-      
-      resultDiv.innerHTML = '<div class="api-test-result">Testing API key...</div>';
-      
-      try {
-        const response = await fetch("https://api.openai.com/v1/models", {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${apiKey}`
-          }
-        });
-        
-        if (response.ok) {
-          resultDiv.innerHTML = '<div class="api-test-result api-test-success">✅ API key is valid!</div>';
-        } else {
-          const error = await response.json().catch(() => ({ error: { message: "Invalid key" } }));
-          resultDiv.innerHTML = `<div class="api-test-result api-test-failure">❌ ${error.error?.message || response.statusText}</div>`;
-        }
       } catch (error) {
-        resultDiv.innerHTML = `<div class="api-test-result api-test-failure">❌ Connection error: ${error.message}</div>`;
+        summaryDiv.textContent = `Error generating summary: ${error.message}`;
       }
     }
 
-    // HTML escape
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    // ========== Event Listeners ==========
+    // Event listeners
+    document.getElementById('start-btn').addEventListener('click', performSearch);
     
-    document.getElementById("test-api-btn").addEventListener("click", testAPIKey);
-    
-    document.getElementById("start-btn").addEventListener("click", () => {
-      state.config = {
-        openAIKey: document.getElementById("api-key").value.trim(),
-        modelChoice: document.getElementById("model-select").value,
-        totalIterations: parseInt(document.getElementById("iterations").value),
-        articlesPerIteration: parseInt(document.getElementById("articles-per-iter").value),
-        topArticlesPerIteration: parseInt(document.getElementById("top-articles").value),
-        searchStrategy: document.getElementById("search-strategy").value
-      };
-      
-      const query = document.getElementById("query-input").value.trim();
-      
-      if (!state.config.openAIKey) {
-        alert("Please enter your OpenAI API key.");
-        return;
-      }
-      
-      if (!query) {
-        alert("Please enter a research query.");
-        return;
-      }
-      
-      runIterativeSearch(query);
-    });
-    
-    document.getElementById("cancel-btn").addEventListener("click", () => {
+    document.getElementById('cancel-btn').addEventListener('click', () => {
       if (state.abortController) {
         state.abortController.abort();
+        log('\n❌ Search cancelled by user.\n');
       }
     });
     
-    document.getElementById("summary-btn").addEventListener("click", generateAbstractSummary);
+    document.getElementById('summarize-btn').addEventListener('click', generateSummary);
     
-    // Initialize
-    window.addEventListener('load', () => {
-      document.getElementById("query-input").focus();
-      
-      if (window.location.protocol === 'file:') {
-        document.getElementById('cors-warning').style.display = 'block';
+    // Enter key support
+    document.getElementById('query-input').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !state.isSearching) {
+        performSearch();
       }
-      
-      loadPrompts();
     });
   </script>
 </body>
