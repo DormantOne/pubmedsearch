@@ -513,23 +513,14 @@
             }
 
             const DefaultPromptTemplates = {
-                INITIAL_SEARCH_TERMS: `You are a medical research expert. Generate 4-5 diverse, optimized PubMed search strategies for this query: "{query}"
+                KEY_TERM_EXTRACTION: `You are a biomedical research analyst. Your task is to extract the most critical, independent concepts from a user's research query.
 
-Create strategies that range from:
-1. Highly specific (narrow, precise terms)
-2. Moderately specific (balanced approach)
-3. Broader conceptual (related concepts)
-4. Alternative terminology (synonyms, related fields)
-5. Systematic/review focused (if applicable)
+From the query: "{query}"
 
-Use proper PubMed syntax:
-- MeSH terms in [brackets] like "Myocardial Infarction"[Mesh]
-- Boolean operators (AND, OR, NOT)
-- Field tags [ti], [ab], [au]
-- Quotation marks for exact phrases
+Identify and list the 2 to 4 most important key terms. These should be nouns or noun phrases representing distinct concepts (e.g., a gene, a disease, a technique, a cell type). Do not include stop words like "and", "of", "in", "to", "show", "experiments".
 
-Return only a JSON array of search strings:
-["search1", "search2", "search3", "search4", "search5"]`,
+Return only a JSON array of strings:
+["term1", "term2", "term3", ...]`,
 
                 REFINED_SEARCH_TERMS: `Based on the search evolution below, generate 4-5 NEW and IMPROVED PubMed search strategies.
 
@@ -537,7 +528,7 @@ Return only a JSON array of search strings:
 
 IMPORTANT: 
 - DO NOT repeat previous search strategies
-- Learn from what worked/didn't work
+- Learn from what worked/didn't work. If previous searches returned 0 results, the terms were too specific. Make the new searches broader by using fewer terms or more general concepts.
 - Try different angles, terminology, and approaches
 - Focus on gaps or promising directions from previous results
 - Consider the "next strategy" suggestions from previous iterations
@@ -572,13 +563,13 @@ Top articles found:
 Provide analysis in this format:
 
 ANALYSIS:
-[Evaluate what worked well and what didn't in this iteration]
+[Evaluate what worked well and what didn't in this iteration. If 0 articles were found, state that the search was too specific and recommend broadening the next search.]
 
 LESSONS LEARNED:
-[Key insights for improving future searches]
+[Key insights for improving future searches. Emphasize the need to broaden the search if results are poor.]
 
 NEXT STRATEGY:
-[Specific recommendations for the next iteration's search approach]
+[Specific recommendations for the next iteration's search approach. If the current search was too narrow, suggest removing a term or using more general synonyms.]
 
 Keep each section concise but insightful.`,
 
@@ -733,26 +724,26 @@ Make the summary comprehensive but accessible to both researchers and clinicians
                         }
                         const unique_pmids = [...new Set(iteration_pmids)];
                         this.iteration_update_callback(`📊 Found ${unique_pmids.length} unique articles\n`);
-
-                        if (unique_pmids.length === 0) continue;
-
-                        const new_pmids = unique_pmids.filter(pmid => !all_articles.has(pmid));
-                        if (new_pmids.length > 0) {
-                            const new_articles = await this._fetch_article_details(new_pmids);
-                            new_articles.forEach(article => {
-                                article.found_in_iteration = i + 1;
-                                article.search_terms_used = [...search_terms];
-                                all_articles.set(article.pmid, article);
-                            });
-                        }
-                        
-                        const current_articles = unique_pmids.map(pmid => all_articles.get(pmid)).filter(Boolean);
                         
                         let top_articles = [];
-                        if (current_articles.length > 0) {
-                            this.iteration_update_callback(`🤖 Analyzing articles with AI...\n`);
-                            const analyzed_articles = await this._ai_analyze_articles(query, current_articles, model);
-                            top_articles = analyzed_articles.sort((a, b) => b.relevance_score - a.relevance_score).slice(0, top_articles_per_iteration);
+                        if (unique_pmids.length > 0) {
+                            const new_pmids = unique_pmids.filter(pmid => !all_articles.has(pmid));
+                            if (new_pmids.length > 0) {
+                                const new_articles = await this._fetch_article_details(new_pmids);
+                                new_articles.forEach(article => {
+                                    article.found_in_iteration = i + 1;
+                                    article.search_terms_used = [...search_terms];
+                                    all_articles.set(article.pmid, article);
+                                });
+                            }
+                            
+                            const current_articles = unique_pmids.map(pmid => all_articles.get(pmid)).filter(Boolean);
+                            
+                            if (current_articles.length > 0) {
+                                this.iteration_update_callback(`🤖 Analyzing articles with AI...\n`);
+                                const analyzed_articles = await this._ai_analyze_articles(query, current_articles, model);
+                                top_articles = analyzed_articles.sort((a, b) => b.relevance_score - a.relevance_score).slice(0, top_articles_per_iteration);
+                            }
                         }
                         
                         const { analysis, lessons_learned, next_strategy } = await this._generate_iteration_insights(query, search_terms, top_articles, i, model);
@@ -764,6 +755,8 @@ Make the summary comprehensive but accessible to both researchers and clinicians
                             });
                             this.iteration_update_callback(`\n💡 Lessons learned: ${lessons_learned}\n`);
                             this.iteration_update_callback(`📍 Next strategy: ${next_strategy}\n`);
+                        } else if (unique_pmids.length === 0) {
+                             this.iteration_update_callback(`\n⚠️ No articles found. AI analysis suggests: ${lessons_learned}\n`);
                         }
 
                         const search_iteration = {
@@ -778,8 +771,6 @@ Make the summary comprehensive but accessible to both researchers and clinicians
                         };
                         iteration_history.push(search_iteration);
                         evolution.iterations.push(search_iteration);
-                        
-                        // No delay needed here, delays are inside API call functions
                     }
 
                     const all_found_articles = Array.from(all_articles.values());
@@ -823,15 +814,38 @@ Make the summary comprehensive but accessible to both researchers and clinicians
                     return { correctedTerms, logs };
                 }
 
-
                 async _generate_initial_search_terms(query, model) {
-                    const prompt = this.prompts.INITIAL_SEARCH_TERMS.replace('{query}', query);
+                    this.iteration_update_callback("🤖 AI extracting key concepts from query...\n");
+                    const prompt = this.prompts.KEY_TERM_EXTRACTION.replace('{query}', query);
                     try {
-                        const response_text = await this._call_openai_api(prompt, model, 600, 0.3);
-                        return this._parse_json_response(response_text);
+                        const response_text = await this._call_openai_api(prompt, model, 100, 0.1);
+                        const keyTerms = this._parse_json_response(response_text);
+                        this.iteration_update_callback(`🔑 Key concepts identified: ${keyTerms.join(', ')}\n`);
+
+                        if (keyTerms.length < 2) {
+                            return [query]; // Fallback for simple queries
+                        }
+
+                        this.iteration_update_callback("🛠️ Generating broad, combinatorial search strategies...\n");
+                        const search_strategies = [];
+                        for (let i = 0; i < keyTerms.length; i++) {
+                            for (let j = i + 1; j < keyTerms.length; j++) {
+                                // Create a robust search for each term
+                                const termA = `("${keyTerms[i]}"[Mesh] OR "${keyTerms[i]}"[tiab])`;
+                                const termB = `("${keyTerms[j]}"[Mesh] OR "${keyTerms[j]}"[tiab])`;
+                                search_strategies.push(`${termA} AND ${termB}`);
+                            }
+                        }
+                        // Add a search with all terms as well, for specificity
+                        const allTermsSearch = keyTerms.map(term => `("${term}"[Mesh] OR "${term}"[tiab])`).join(' AND ');
+                        search_strategies.push(allTermsSearch);
+                        
+                        return search_strategies.slice(0, 5); // Limit to a reasonable number
+
                     } catch (e) {
-                        console.error("Error generating initial search terms, falling back to default.", e);
-                        return [query.split(' ').join(' AND ')];
+                        console.error("Error generating initial search terms, falling back to simple AND.", e);
+                        this.iteration_update_callback("⚠️ Could not extract key terms, falling back to simpler search.\n");
+                        return [query.split(' ').filter(word => word.length > 2).join(' AND ')];
                     }
                 }
                 
@@ -840,9 +854,10 @@ Make the summary comprehensive but accessible to both researchers and clinicians
                     iteration_history.slice(-2).forEach(iter => {
                         context += `\nIteration ${iter.iteration}:\n`;
                         context += `Search terms used: ${JSON.stringify(iter.search_terms)}\n`;
+                        context += `Results: ${iter.filtered_results_count} unique articles found.\n`;
                         context += `Lessons learned: ${iter.lessons_learned}\n`;
                         if(iter.top_articles.length > 0) context += `Best article found: ${iter.top_articles[0].title}\n`;
-                        context += `Next strategy: ${iter.next_strategy}\n`;
+                        context += `Next strategy suggested: ${iter.next_strategy}\n`;
                     });
                     const prompt = this.prompts.REFINED_SEARCH_TERMS.replace('{context}', context);
                     try {
@@ -1048,7 +1063,7 @@ Make the summary comprehensive but accessible to both researchers and clinicians
                     const params = new URLSearchParams({ db: 'mesh', term: term, tool: this.tool_name, email: this.email });
                     try {
                         const response = await fetch(`${this.cors_proxy_url}${this.base_search_url}?${params}`);
-                        await this._delay(); // ADDED DELAY TO PREVENT RATE-LIMITING
+                        await this._delay();
                         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                         const text = await response.text();
                         const parser = new DOMParser();
