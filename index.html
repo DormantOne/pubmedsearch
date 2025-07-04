@@ -628,6 +628,7 @@ Make the summary comprehensive but accessible to both researchers and clinicians
             class AdvancedPubMedSearcher {
                 constructor() {
                     this.openai_api_key = null;
+                    this.cors_proxy_url = 'https://corsproxy.io/?';
                     this.base_search_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi";
                     this.base_fetch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi";
                     this.email = "research.tool@example.com";
@@ -713,7 +714,6 @@ Make the summary comprehensive but accessible to both researchers and clinicians
                             search_terms = await this._generate_refined_search_terms(query, iteration_history, model);
                         }
 
-                        // ** NEW: Validate MeSH terms **
                         this.iteration_update_callback(`🔍 Validating AI-generated MeSH terms...\n`);
                         const validationResult = await this._validateAndCorrectSearchTerms(search_terms);
                         search_terms = validationResult.correctedTerms;
@@ -865,7 +865,8 @@ Make the summary comprehensive but accessible to both researchers and clinicians
                         sort: 'relevance'
                     });
                     try {
-                        const response = await fetch(`${this.base_search_url}?${params}`);
+                        const response = await fetch(`${this.cors_proxy_url}${this.base_search_url}?${params}`);
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                         const text = await response.text();
                         await this._delay();
                         const parser = new DOMParser();
@@ -887,7 +888,8 @@ Make the summary comprehensive but accessible to both researchers and clinicians
                         email: this.email
                     });
                     try {
-                        const response = await fetch(`${this.base_fetch_url}?${params}`);
+                        const response = await fetch(`${this.cors_proxy_url}${this.base_fetch_url}?${params}`);
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                         const text = await response.text();
                         await this._delay();
                         const parser = new DOMParser();
@@ -1045,7 +1047,8 @@ Make the summary comprehensive but accessible to both researchers and clinicians
                 async validate_mesh_term(term) {
                     const params = new URLSearchParams({ db: 'mesh', term: term, tool: this.tool_name, email: this.email });
                     try {
-                        const response = await fetch(`${this.base_search_url}?${params}`);
+                        const response = await fetch(`${this.cors_proxy_url}${this.base_search_url}?${params}`);
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                         const text = await response.text();
                         const parser = new DOMParser();
                         const xmlDoc = parser.parseFromString(text, "text/xml");
