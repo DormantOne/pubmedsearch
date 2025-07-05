@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Iterative AI PubMed Research System</title>
+    <style>
+        :root {
+            --primary-bg: #f4f7f9;
+            --secondary-bg: #ffffff;
+            --border-color: #d1d9e0;
+            --text-color: #333;
+            --primary-blue: #007bff;
+            --primary-green: #28a745;
+            --primary-orange: #fd7e14;
+            --primary-red: #dc3545;
+            --light-red-bg: #ffe6e6;
+            --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            font-size: 14px;
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: auto;
+            background: var(--secondary-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        .tab-button {
+            padding: 10px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 16px;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease-in-out;
+        }
+        .tab-button:hover {
+            background-color: #f0f0f0;
+        }
+        .tab-button.active {
+            border-bottom-color: var(--primary-blue);
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Fieldset and Legend */
+        fieldset {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        legend {
+            font-weight: bold;
+            font-size: 1.1em;
+            padding: 0 10px;
+            color: #34495e;
+        }
+
+        /* Form Elements */
+        input[type="text"], input[type="password"], input[type="number"], select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 1em;
+            margin-top: 5px;
+        }
+        input[type="number"] {
+            width: 80px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .bold-label {
+            font-weight: bold;
+        }
+
+        /* Buttons */
+        button {
+            padding: 10px 15px;
+            font-size: 1em;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #search-btn { background-color: var(--primary-green); width: 100%; padding: 15px; margin-top: 20px; font-size: 1.2em; }
+        #search-btn:hover:enabled { background-color: #218838; }
+
+        #set-api-key-btn { background-color: var(--primary-green); }
+        #set-api-key-btn:hover:enabled { background-color: #218838; }
+
+        .export-buttons button, .summary-controls button, .mesh-validator-input button, .prompt-buttons button, #test-api-key-btn {
+            background-color: var(--primary-blue);
+        }
+        .export-buttons button:hover, .summary-controls button:hover, .mesh-validator-input button:hover, .prompt-buttons button:hover, #test-api-key-btn:hover {
+            background-color: #0069d9;
+        }
+        #apply-prompts-btn { background-color: var(--primary-orange); }
+        #reset-prompts-btn { background-color: #17a2b8; }
+
+
+        /* Specific Layouts */
+        .params-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            align-items: center;
+        }
+        .token-display-container {
+            margin-top: 20px;
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: right;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* Progress Bar */
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        #progress-bar {
+            width: 0%;
+            height: 20px;
+            background-color: var(--primary-blue);
+            transition: width 0.3s ease-in-out;
+        }
+        #progress-bar.finished {
+            background-color: var(--primary-green);
+        }
+
+        /* Text Areas & Results */
+        pre, .results-area {
+            background-color: #f8f9fa;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 15px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+        }
+        .results-area {
+            font-family: var(--font-family);
+            font-size: 1em;
+        }
+
+        .summary-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .summary-controls input { margin-top: 0; }
+        .summary-controls button { margin-left: auto; }
+
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* Config Tab */
+        .api-key-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 10px;
+        }
+        #api-key-test-result {
+            font-weight: bold;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .api-test-success { color: var(--primary-green); background-color: #eaf6ec; }
+        .api-test-failure { color: var(--primary-red); background-color: var(--light-red-bg); }
+        
+        .warning {
+            background-color: var(--light-red-bg);
+            color: var(--primary-red);
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid var(--primary-red);
+        }
+        .prompt-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 10px;
+        }
+        .prompt-tab-button {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+            background: #f0f0f0;
+            cursor: pointer;
+            border-radius: 4px 4px 0 0;
+        }
+        .prompt-tab-button.active {
+            background: var(--secondary-bg);
+            border-bottom: 1px solid var(--secondary-bg);
+            font-weight: bold;
+        }
+        #prompt-editor-container textarea {
+            width: 100%;
+            height: 300px;
+            box-sizing: border-box;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+            padding: 10px;
+        }
+        .prompt-editor {
+            display: none;
+        }
+        .prompt-editor.active {
+            display: block;
+        }
+        .prompt-buttons {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        /* MeSH Validator */
+        .mesh-validator-input {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .mesh-validator-input input {
+            flex-grow: 1;
+        }
+        #mesh-validator-result {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .valid { color: var(--primary-green); }
+        .invalid { color: var(--primary-red); }
+
+        /* Article Formatting */
+        .article {
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        .article h3 {
+            margin: 0 0 10px 0;
+            color: var(--primary-blue);
+        }
+        .article p {
+            margin: 4px 0;
+            line-height: 1.5;
+        }
+        .article-meta {
+            font-style: italic;
+            color: #555;
+            font-size: 0.9em;
+        }
+        .article-reasoning {
+            background-color: #eef7ff;
+            padding: 8px;
+            border-radius: 4px;
+            border-left: 3px solid var(--primary-blue);
+        }
+        .article-abstract {
+            margin-top: 10px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <h1>Advanced Iterative AI PubMed Research System</h1>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="openTab(event, 'search-tab')">🔬 Iterative Search</button>
+            <button class="tab-button" onclick="openTab(event, 'results-tab')">📊 Results & Analysis</button>
+            <button class="tab-button" onclick="openTab(event, 'strategic-analysis-tab')">💡 Strategic Analysis</button>
+            <button class="tab-button" onclick="openTab(event, 'evolution-tab')">🧬 Search Evolution</button>
+            <button class="tab-button" onclick="openTab(event, 'config-tab')">⚙️ Configuration</button>
+        </div>
+
+        <!-- Search Tab -->
+        <div id="search-tab" class="tab-content active">
+            <fieldset>
+                <legend>Research Query</legend>
+                <label for="query-entry" class="bold-label">Enter your medical research question:</label>
+                <input type="text" id="query-entry" placeholder="e.g., effectiveness of metformin in treating PCOS">
+            </fieldset>
+
+            <fieldset>
+                <legend>MeSH Term Validator (New Feature)</legend>
+                <label for="mesh-term-entry">Enter a single MeSH term to validate (e.g., "Cardiovascular Diseases"):</label>
+                <div class="mesh-validator-input">
+                    <input type="text" id="mesh-term-entry" placeholder="Myocardial Infarction">
+                    <button id="validate-mesh-btn">Validate Term</button>
+                </div>
+                <div id="mesh-validator-result"></div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Search Parameters</legend>
+                <div class="params-grid">
+                    <div>
+                        <label for="iterations-input">Iterations:</label>
+                        <input type="number" id="iterations-input" value="4" min="2" max="8">
+                    </div>
+                    <div>
+                        <label for="articles-per-iter-input">Articles per iteration:</label>
+                        <input type="number" id="articles-per-iter-input" value="15" min="10" max="50">
+                    </div>
+                    <div>
+                        <label for="top-articles-input">Top articles to analyze:</label>
+                        <input type="number" id="top-articles-input" value="5" min="3" max="10">
+                    </div>
+                    <div>
+                        <label for="model-select">AI Model:</label>
+                        <select id="model-select">
+                            <option value="gpt-4">gpt-4</option>
+                            <option value="gpt-4-turbo">gpt-4-turbo</option>
+                            <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="token-display-container">
+                    <span>🔤 Tokens:</span>
+                    <span id="token-display">In: 0 | Out: 0 | Cost: $0.00</span>
+                </div>
+                <button id="search-btn">🔍 Start Iterative Search</button>
+            </fieldset>
+            
+            <fieldset>
+                <legend>Search Progress</legend>
+                <div id="progress-text">Ready for iterative search...</div>
+                <div class="progress-bar-container">
+                    <div id="progress-bar"></div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Iteration Details</legend>
+                <pre id="iteration-text"></pre>
+            </fieldset>
+        </div>
+
+        <!-- Results Tab -->
+        <div id="results-tab" class="tab-content">
+            <fieldset>
+                <legend>Top 5 Articles with Abstracts</legend>
+                <div id="top-articles-text" class="results-area"></div>
+            </fieldset>
+
+            <fieldset>
+                <legend>AI Summary of Top Articles</legend>
+                <div class="summary-controls">
+                    <label for="summary-count-input">Summarize top:</label>
+                    <input type="number" id="summary-count-input" value="5" min="3" max="15">
+                    <span>articles</span>
+                    <button id="generate-summary-btn">Generate Summary</button>
+                </div>
+                <div id="summary-text" class="results-area"></div>
+            </fieldset>
+
+            <div class="export-buttons">
+                <button id="save-top-articles-btn">💾 Save Top Articles</button>
+                <button id="save-summary-btn">📄 Save Summary</button>
+                <button id="export-all-btn">📋 Export All Results</button>
+            </div>
+        </div>
+
+        <!-- Strategic Analysis Tab (NEW) -->
+        <div id="strategic-analysis-tab" class="tab-content">
+            <fieldset>
+                <legend>Top Lead Authors from Promising Papers</legend>
+                <div id="top-authors-text" class="results-area"></div>
+            </fieldset>
+            <fieldset>
+                <legend>Top MeSH Terms from Promising Papers</legend>
+                <div id="top-mesh-terms-text" class="results-area"></div>
+            </fieldset>
+        </div>
+
+        <!-- Evolution Tab -->
+        <div id="evolution-tab" class="tab-content">
+            <fieldset>
+                <legend>Search Evolution Overview</legend>
+                <div id="evolution-summary-text" class="results-area"></div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Complete Article Rankings</legend>
+                <pre id="rankings-text"></pre>
+            </fieldset>
+        </div>
+
+        <!-- Configuration Tab -->
+        <div id="config-tab" class="tab-content">
+            <fieldset>
+                <legend>OpenAI API Configuration</legend>
+                <label for="api-key-entry" class="bold-label">OpenAI API Key:</label>
+                <input type="password" id="api-key-entry" placeholder="sk-...">
+                <div class="api-key-controls">
+                    <button id="set-api-key-btn">Set API Key</button>
+                    <button id="test-api-key-btn">Test API Key</button>
+                    <div id="api-key-test-result"></div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>⚠️ Advanced Prompt Customization</legend>
+                <div class="warning">
+                    ⚠️ These prompts have been carefully tuned for optimal performance. Modifications may affect result quality.
+                </div>
+                <div class="prompt-tabs">
+                    <!-- Prompt tab buttons will be generated here by JS -->
+                </div>
+                <div id="prompt-editor-container">
+                    <!-- Textareas for prompts will be generated here by JS -->
+                </div>
+                <div class="prompt-buttons">
+                    <button id="apply-prompts-btn">Apply Custom Prompts</button>
+                    <button id="reset-prompts-btn">Reset to Defaults</button>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Data Classes and Templates ---
+            class Article {
+                constructor({ pmid, title, authors, journal, pub_date, abstract = "", meshTerms = [], leadAuthor = "N/A" }) {
+                    this.pmid = pmid;
+                    this.title = title;
+                    this.authors = authors;
+                    this.journal = journal;
+                    this.pub_date = pub_date;
+                    this.abstract = abstract;
+                    this.meshTerms = meshTerms;
+                    this.leadAuthor = leadAuthor;
+                    this.relevance_score = 0.0;
+                    this.ai_reasoning = "";
+                    this.found_in_iteration = 0;
+                    this.search_terms_used = [];
+                }
+            }
+
+            class SearchEvolution {
+                constructor(original_query) {
+                    this.original_query = original_query;
+                    this.iterations = [];
+                    this.final_ranking = [];
+                    this.search_summary = "";
+                    this.total_unique_articles = 0;
+                }
+            }
+
+            class TokenCounter {
+                constructor() {
+                    this.input_tokens = 0;
+                    this.output_tokens = 0;
+                }
+                estimate_tokens(text) { return Math.ceil((text || "").length / 4); }
+                add_api_call(prompt, response) {
+                    this.input_tokens += this.estimate_tokens(prompt);
+                    this.output_tokens += this.estimate_tokens(response);
+                }
+                get_cost_estimate(model = "gpt-4") {
+                    const pricing = {
+                        "gpt-4": { input: 0.03, output: 0.06 },
+                        "gpt-4-turbo": { input: 0.01, output: 0.03 },
+                        "gpt-3.5-turbo": { input: 0.0005, output: 0.0015 }
+                    };
+                    const model_pricing = pricing[model] || pricing["gpt-4"];
+                    const input_cost = (this.input_tokens / 1000) * model_pricing.input;
+                    const output_cost = (this.output_tokens / 1000) * model_pricing.output;
+                    return input_cost + output_cost;
+                }
+                reset() {
+                    this.input_tokens = 0;
+                    this.output_tokens = 0;
+                }
+            }
+
+            const DefaultPromptTemplates = {
+                KEY_TERM_EXTRACTION: `You are a biomedical research analyst. Your task is to extract the most critical, independent concepts from a user's research query.
+
+From the query: "{query}"
+
+Identify and list the 2 to 4 most important key terms. These should be nouns or noun phrases representing distinct concepts (e.g., a gene, a disease, a technique, a cell type). Do not include stop words like "and", "of", "in", "to", "show", "experiments".
+
+Return only a JSON array of strings:
+["term1", "term2", "term3", ...]`,
+
+                REFINED_SEARCH_TERMS: `Based on the search evolution below, generate 4-5 NEW and IMPROVED PubMed search strategies.
+
+{context}
+
+IMPORTANT: 
+- DO NOT repeat previous search strategies
+- Learn from what worked/didn't work. If previous searches returned 0 results, the terms were too specific. Make the new searches broader by using fewer terms or more general concepts.
+- Try different angles, terminology, and approaches
+- Focus on gaps or promising directions from previous results
+- Consider the "next strategy" suggestions from previous iterations
+
+Generate diverse new search terms using proper PubMed syntax.
+
+Return only a JSON array of search strings:
+["search1", "search2", "search3", "search4", "search5"]`,
+
+                ARTICLE_ANALYSIS: `Analyze these medical research articles for relevance to the query: "{query}"
+
+For each article, provide:
+1. Relevance score (0-100, where 100 = perfectly relevant)
+2. Brief reasoning (2-3 sentences explaining why it's relevant/not relevant)
+
+Articles to analyze:
+{articles}
+
+Return a JSON array with this format:
+[
+  {"index": 1, "score": 85, "reasoning": "This study directly addresses... because..."}
+]`,
+
+                ITERATION_INSIGHTS: `Analyze this PubMed search iteration for the query: "{query}"
+
+Iteration {iteration} Results:
+Search terms used: {search_terms}
+
+Top articles found:
+{articles_summary}
+
+Provide analysis in this format:
+
+ANALYSIS:
+[Evaluate what worked well and what didn't in this iteration. If 0 articles were found, state that the search was too specific and recommend broadening the next search.]
+
+LESSONS LEARNED:
+[Key insights for improving future searches. Emphasize the need to broaden the search if results are poor.]
+
+NEXT STRATEGY:
+[Specific recommendations for the next iteration's search approach. If the current search was too narrow, suggest removing a term or using more general synonyms.]
+
+Keep each section concise but insightful.`,
+
+                FINAL_RANKING: `Perform final comprehensive ranking of these articles for the query: "{query}"
+
+Consider:
+- Direct relevance to the research question
+- Quality and recency of the research
+- Clinical significance
+- Methodological rigor (based on abstract)
+
+Articles to rank:
+{articles}
+
+Return a JSON array with the article numbers in order from MOST to LEAST relevant:
+[3, 1, 7, 2, 5, ...]
+
+Include all {count} articles in your ranking.`,
+
+                SEARCH_SUMMARY: `Create a comprehensive summary of this iterative PubMed search:
+
+{summary_data}
+
+Provide:
+1. Overall search effectiveness and evolution
+2. Key insights about the research landscape for this topic
+3. Quality of results obtained
+4. Search strategy effectiveness
+
+Keep it concise but informative (3-4 paragraphs).`,
+
+                ABSTRACT_SUMMARY: `Analyze and summarize these top research articles:
+
+{abstracts}
+
+Provide:
+1. OVERVIEW: Common themes and key findings across the articles
+2. METHODOLOGY: Types of studies and research approaches used
+3. KEY FINDINGS: Most important results and conclusions
+4. CLINICAL RELEVANCE: Practical implications for healthcare/treatment
+5. RESEARCH GAPS: Areas that need further investigation
+
+Make the summary comprehensive but accessible to both researchers and clinicians.`,
+            };
+
+            // --- Core Searcher Logic ---
+            class AdvancedPubMedSearcher {
+                constructor() {
+                    this.openai_api_key = null;
+                    this.cors_proxy_url = 'https://corsproxy.io/?';
+                    this.base_search_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi";
+                    this.base_fetch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi";
+                    this.email = "research.tool@example.com";
+                    this.tool_name = "Advanced-AI-PubMed-Searcher-JS";
+                    this.request_delay = 340; // ms
+                    this.token_counter = new TokenCounter();
+                    this.prompts = { ...DefaultPromptTemplates };
+                    this.token_update_callback = null;
+                    this.iteration_update_callback = null;
+                }
+
+                set_api_key(api_key) { this.openai_api_key = api_key; }
+                set_callbacks(token_callback, iteration_callback) {
+                    this.token_update_callback = token_callback;
+                    this.iteration_update_callback = iteration_callback;
+                }
+                
+                async _delay() {
+                    return new Promise(resolve => setTimeout(resolve, this.request_delay));
+                }
+
+                async _call_openai_api(prompt, model, max_tokens, temperature) {
+                    if (!this.openai_api_key) throw new Error("OpenAI API key is not set.");
+                    
+                    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.openai_api_key}`
+                        },
+                        body: JSON.stringify({
+                            model: model,
+                            messages: [{ role: "user", content: prompt }],
+                            max_tokens: max_tokens,
+                            temperature: temperature,
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(`OpenAI API Error: ${errorData.error.message}`);
+                    }
+
+                    const data = await response.json();
+                    const response_text = data.choices[0].message.content.trim();
+                    this.token_counter.add_api_call(prompt, response_text);
+                    if (this.token_update_callback) this.token_update_callback(this.token_counter);
+
+                    return response_text;
+                }
+
+                _parse_json_response(text) {
+                    try {
+                        // Find the first and last brackets to handle leading/trailing text
+                        const startIndex = text.indexOf('[');
+                        const endIndex = text.lastIndexOf(']');
+                        if (startIndex === -1 || endIndex === -1) {
+                            throw new Error("No JSON array found in response");
+                        }
+                        const json_str = text.substring(startIndex, endIndex + 1);
+                        return JSON.parse(json_str);
+                    } catch (e) {
+                        console.error("Failed to parse JSON:", text, e);
+                        throw new Error("Could not parse AI response as JSON.");
+                    }
+                }
+                
+                async perform_iterative_search(query, max_iterations, articles_per_iteration, top_articles_per_iteration, model) {
+                    const evolution = new SearchEvolution(query);
+                    this.token_counter.reset();
+                    const all_articles = new Map();
+                    const iteration_history = [];
+
+                    this.iteration_update_callback(`Starting iterative search for: ${query}\n`);
+
+                    for (let i = 0; i < max_iterations; i++) {
+                        this.iteration_update_callback(`\n🔄 ITERATION ${i + 1}/${max_iterations}\n${'='.repeat(50)}\n`);
+
+                        let search_terms;
+                        if (i === 0) {
+                            search_terms = await this._generate_initial_search_terms(query, model);
+                        } else {
+                            search_terms = await this._generate_refined_search_terms(query, iteration_history, model);
+                        }
+
+                        this.iteration_update_callback(`🔍 Validating AI-generated MeSH terms...\n`);
+                        const validationResult = await this._validateAndCorrectSearchTerms(search_terms);
+                        search_terms = validationResult.correctedTerms;
+                        if (validationResult.logs.length > 0) {
+                            this.iteration_update_callback(`⚠️ Some invalid MeSH terms were corrected:\n`);
+                            validationResult.logs.forEach(log => this.iteration_update_callback(`  - ${log}\n`));
+                        } else {
+                            this.iteration_update_callback(`✅ All MeSH terms appear valid.\n`);
+                        }
+                        
+                        this.iteration_update_callback(`\nSearch strategies for this iteration:\n${search_terms.map((t, idx) => `  ${idx+1}. ${t}`).join('\n')}\n\n`);
+
+                        let iteration_pmids = [];
+                        for (const term of search_terms) {
+                            const pmids = await this._search_pubmed(term, Math.ceil(articles_per_iteration / search_terms.length) + 5);
+                            iteration_pmids.push(...pmids);
+                        }
+                        const unique_pmids = [...new Set(iteration_pmids)];
+                        this.iteration_update_callback(`📊 Found ${unique_pmids.length} unique articles\n`);
+                        
+                        let top_articles = [];
+                        if (unique_pmids.length > 0) {
+                            const new_pmids = unique_pmids.filter(pmid => !all_articles.has(pmid));
+                            if (new_pmids.length > 0) {
+                                const new_articles = await this._fetch_article_details(new_pmids);
+                                new_articles.forEach(article => {
+                                    article.found_in_iteration = i + 1;
+                                    article.search_terms_used = [...search_terms];
+                                    all_articles.set(article.pmid, article);
+                                });
+                            }
+                            
+                            const current_articles = unique_pmids.map(pmid => all_articles.get(pmid)).filter(Boolean);
+                            
+                            if (current_articles.length > 0) {
+                                this.iteration_update_callback(`🤖 Analyzing articles with AI...\n`);
+                                const analyzed_articles = await this._ai_analyze_articles(query, current_articles, model);
+                                top_articles = analyzed_articles.sort((a, b) => b.relevance_score - a.relevance_score).slice(0, top_articles_per_iteration);
+                            }
+                        }
+                        
+                        const { analysis, lessons_learned, next_strategy } = await this._generate_iteration_insights(query, search_terms, top_articles, i, model);
+
+                        if (top_articles.length > 0) {
+                            this.iteration_update_callback(`\n🏆 Top articles this iteration:\n`);
+                            top_articles.slice(0, 3).forEach((article, idx) => {
+                                this.iteration_update_callback(`${idx+1}. ${article.title.substring(0, 80)}... (Score: ${article.relevance_score})\n`);
+                            });
+                            this.iteration_update_callback(`\n💡 Lessons learned: ${lessons_learned}\n`);
+                            this.iteration_update_callback(`📍 Next strategy: ${next_strategy}\n`);
+                        } else if (unique_pmids.length === 0) {
+                             this.iteration_update_callback(`\n⚠️ No articles found. AI analysis suggests: ${lessons_learned}\n`);
+                        }
+
+                        const search_iteration = {
+                            iteration: i + 1,
+                            search_terms,
+                            raw_results_count: iteration_pmids.length,
+                            filtered_results_count: unique_pmids.length,
+                            top_articles,
+                            ai_analysis: analysis,
+                            lessons_learned,
+                            next_strategy
+                        };
+                        iteration_history.push(search_iteration);
+                        evolution.iterations.push(search_iteration);
+                    }
+
+                    const all_found_articles = Array.from(all_articles.values());
+                    if (all_found_articles.length > 0) {
+                        this.iteration_update_callback(`\n\n🎯 FINAL RANKING\n${'='.repeat(50)}\n`);
+                        this.iteration_update_callback(`Performing comprehensive ranking of ${all_found_articles.length} articles...\n`);
+                        evolution.final_ranking = await this._final_comprehensive_ranking(query, all_found_articles, model);
+                    }
+
+                    evolution.total_unique_articles = all_articles.size;
+                    evolution.search_summary = await this._generate_search_summary(evolution, model);
+                    
+                    this.iteration_update_callback(`\n✅ Search complete! Found ${evolution.total_unique_articles} unique articles.\n`);
+                    return evolution;
+                }
+                
+                async _validateAndCorrectSearchTerms(searchTerms) {
+                    const correctedTerms = [];
+                    const logs = [];
+                    const meshRegex = /("([^"]+)"|([a-zA-Z0-9\s-]+?))\[Mesh\]/gi;
+
+                    for (const term of searchTerms) {
+                        let correctedTerm = term;
+                        const matches = [...term.matchAll(meshRegex)];
+
+                        for (const match of matches) {
+                            const meshTermToValidate = (match[2] || match[3]).trim();
+                            if (!meshTermToValidate) continue;
+                            
+                            const isValid = await this.validate_mesh_term(meshTermToValidate);
+                            
+                            if (!isValid) {
+                                const originalFragment = match[0];
+                                const keywordFragment = `"${meshTermToValidate}"`;
+                                correctedTerm = correctedTerm.replace(originalFragment, keywordFragment);
+                                logs.push(`"${meshTermToValidate}" was invalid, converted to keyword.`);
+                            }
+                        }
+                        correctedTerms.push(correctedTerm);
+                    }
+                    return { correctedTerms, logs };
+                }
+
+                async _generate_initial_search_terms(query, model) {
+                    this.iteration_update_callback("🤖 AI extracting key concepts from query...\n");
+                    const prompt = this.prompts.KEY_TERM_EXTRACTION.replace('{query}', query);
+                    try {
+                        const response_text = await this._call_openai_api(prompt, model, 100, 0.1);
+                        const keyTerms = this._parse_json_response(response_text);
+                        this.iteration_update_callback(`🔑 Key concepts identified: ${keyTerms.join(', ')}\n`);
+
+                        if (keyTerms.length < 2) {
+                            return [query]; // Fallback for simple queries
+                        }
+
+                        this.iteration_update_callback("🛠️ Generating broad, combinatorial search strategies...\n");
+                        const search_strategies = [];
+                        for (let i = 0; i < keyTerms.length; i++) {
+                            for (let j = i + 1; j < keyTerms.length; j++) {
+                                // Create a robust search for each term
+                                const termA = `("${keyTerms[i]}"[Mesh] OR "${keyTerms[i]}"[tiab])`;
+                                const termB = `("${keyTerms[j]}"[Mesh] OR "${keyTerms[j]}"[tiab])`;
+                                search_strategies.push(`${termA} AND ${termB}`);
+                            }
+                        }
+                        // Add a search with all terms as well, for specificity
+                        const allTermsSearch = keyTerms.map(term => `("${term}"[Mesh] OR "${term}"[tiab])`).join(' AND ');
+                        search_strategies.push(allTermsSearch);
+                        
+                        return search_strategies.slice(0, 5); // Limit to a reasonable number
+
+                    } catch (e) {
+                        console.error("Error generating initial search terms, falling back to simple AND.", e);
+                        this.iteration_update_callback("⚠️ Could not extract key terms, falling back to simpler search.\n");
+                        return [query.split(' ').filter(word => word.length > 2).join(' AND ')];
+                    }
+                }
+                
+                async _generate_refined_search_terms(query, iteration_history, model) {
+                    let context = `Original query: ${query}\n\nPrevious iteration results:\n`;
+                    iteration_history.slice(-2).forEach(iter => {
+                        context += `\nIteration ${iter.iteration}:\n`;
+                        context += `Search terms used: ${JSON.stringify(iter.search_terms)}\n`;
+                        context += `Results: ${iter.filtered_results_count} unique articles found.\n`;
+                        context += `Lessons learned: ${iter.lessons_learned}\n`;
+                        if(iter.top_articles.length > 0) context += `Best article found: ${iter.top_articles[0].title}\n`;
+                        context += `Next strategy suggested: ${iter.next_strategy}\n`;
+                    });
+                    const prompt = this.prompts.REFINED_SEARCH_TERMS.replace('{context}', context);
+                    try {
+                        const response_text = await this._call_openai_api(prompt, model, 600, 0.4);
+                        return this._parse_json_response(response_text);
+                    } catch (e) {
+                        console.error("Error generating refined search terms, falling back to default.", e);
+                        return [query.split(' ').join(' AND ')];
+                    }
+                }
+
+                async _search_pubmed(search_term, max_results = 20) {
+                    const params = new URLSearchParams({
+                        db: 'pubmed',
+                        term: search_term,
+                        retmode: 'xml',
+                        retmax: max_results,
+                        tool: this.tool_name,
+                        email: this.email,
+                        sort: 'relevance'
+                    });
+                    try {
+                        const response = await fetch(`${this.cors_proxy_url}${this.base_search_url}?${params}`);
+                        await this._delay();
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                        const text = await response.text();
+                        const parser = new DOMParser();
+                        const xmlDoc = parser.parseFromString(text, "text/xml");
+                        return Array.from(xmlDoc.querySelectorAll("Id")).map(id => id.textContent);
+                    } catch (e) {
+                        console.error(`Error searching PubMed for "${search_term}":`, e);
+                        return [];
+                    }
+                }
+
+                async _fetch_article_details(pmids) {
+                    if (pmids.length === 0) return [];
+                    const params = new URLSearchParams({
+                        db: 'pubmed',
+                        id: pmids.join(','),
+                        retmode: 'xml',
+                        tool: this.tool_name,
+                        email: this.email
+                    });
+                    try {
+                        const response = await fetch(`${this.cors_proxy_url}${this.base_fetch_url}?${params}`);
+                        await this._delay();
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                        const text = await response.text();
+                        const parser = new DOMParser();
+                        const xmlDoc = parser.parseFromString(text, "text/xml");
+                        const articles = [];
+                        xmlDoc.querySelectorAll("PubmedArticle").forEach(article_elem => {
+                            const abstract_texts = [];
+                            article_elem.querySelectorAll("AbstractText").forEach(abs_elem => {
+                                const label = abs_elem.getAttribute('Label');
+                                const text = abs_elem.textContent;
+                                abstract_texts.push(label ? `${label}: ${text}` : text);
+                            });
+                            
+                            const authors_list = Array.from(article_elem.querySelectorAll("Author")).map(author => 
+                                    `${author.querySelector("LastName")?.textContent || ''}, ${author.querySelector("ForeName")?.textContent || ''}`.replace(/, $/, ''));
+                            
+                            const mesh_terms = Array.from(article_elem.querySelectorAll("MeshHeadingList MeshHeading DescriptorName")).map(el => el.textContent);
+
+                            articles.push(new Article({
+                                pmid: article_elem.querySelector("PMID")?.textContent || "Unknown",
+                                title: article_elem.querySelector("ArticleTitle")?.textContent || "No Title",
+                                authors: authors_list,
+                                journal: article_elem.querySelector("Journal Title")?.textContent || "Unknown Journal",
+                                pub_date: article_elem.querySelector("PubDate Year")?.textContent || "Unknown",
+                                abstract: abstract_texts.join(" "),
+                                meshTerms: mesh_terms,
+                                leadAuthor: authors_list[0] || "N/A"
+                            }));
+                        });
+                        return articles;
+                    } catch (e) {
+                        console.error("Error fetching article details:", e);
+                        return [];
+                    }
+                }
+                
+                async _ai_analyze_articles(query, articles, model) {
+                    if (!this.openai_api_key || articles.length === 0) return articles;
+                    
+                    const article_data = articles.map((article, index) => ({
+                        index: index + 1,
+                        pmid: article.pmid,
+                        title: article.title,
+                        abstract: article.abstract.substring(0, 800)
+                    }));
+
+                    const prompt = this.prompts.ARTICLE_ANALYSIS
+                        .replace('{query}', query)
+                        .replace('{articles}', JSON.stringify(article_data, null, 2));
+
+                    try {
+                        const response_text = await this._call_openai_api(prompt, model, 1200, 0.2);
+                        const analysis = this._parse_json_response(response_text);
+                        
+                        analysis.forEach(result => {
+                            const idx = result.index - 1;
+                            if (articles[idx]) {
+                                articles[idx].relevance_score = result.score;
+                                articles[idx].ai_reasoning = result.reasoning;
+                            }
+                        });
+                        return articles;
+                    } catch(e) {
+                        console.error("Error in AI article analysis:", e);
+                        return articles.map(a => {
+                            a.relevance_score = 50.0;
+                            a.ai_reasoning = "Analysis unavailable due to error.";
+                            return a;
+                        });
+                    }
+                }
+
+                async _generate_iteration_insights(query, search_terms, top_articles, iteration, model) {
+                     let articles_summary = top_articles.length > 0
+                        ? top_articles.slice(0,3).map((a,i) => `${i+1}. ${a.title} (Score: ${a.relevance_score})\n   Reasoning: ${a.ai_reasoning}`).join('\n\n')
+                        : "No relevant articles found this iteration.";
+
+                    const prompt = this.prompts.ITERATION_INSIGHTS
+                        .replace('{query}', query)
+                        .replace('{iteration}', iteration + 1)
+                        .replace('{search_terms}', JSON.stringify(search_terms))
+                        .replace('{articles_summary}', articles_summary);
+                    
+                    try {
+                        const response_text = await this._call_openai_api(prompt, model, 500, 0.3);
+                        const analysis_match = response_text.match(/ANALYSIS:([\s\S]*?)LESSONS LEARNED:/);
+                        const lessons_match = response_text.match(/LESSONS LEARNED:([\s\S]*?)NEXT STRATEGY:/);
+                        const strategy_match = response_text.match(/NEXT STRATEGY:([\s\S]*)/);
+
+                        return {
+                            analysis: analysis_match ? analysis_match[1].trim() : "N/A",
+                            lessons_learned: lessons_match ? lessons_match[1].trim() : "N/A",
+                            next_strategy: strategy_match ? strategy_match[1].trim() : "N/A"
+                        };
+                    } catch(e) {
+                        console.error("Error generating iteration insights:", e);
+                        return { analysis: "Error", lessons_learned: "Error", next_strategy: "Error" };
+                    }
+                }
+
+                async _final_comprehensive_ranking(query, articles, model) {
+                    const top_articles = articles.sort((a,b) => b.relevance_score - a.relevance_score).slice(0, 20);
+                    const article_summaries = top_articles.map((a, i) => 
+                        `${i+1}. PMID: ${a.pmid}\n   Title: ${a.title}\n   Previous Score: ${a.relevance_score}\n   Abstract: ${a.abstract.substring(0,400)}...`
+                    ).join('\n');
+                    
+                    const prompt = this.prompts.FINAL_RANKING
+                        .replace('{query}', query)
+                        .replace('{articles}', article_summaries)
+                        .replace('{count}', top_articles.length);
+
+                    try {
+                        const response_text = await this._call_openai_api(prompt, model, 300, 0.1);
+                        const ranking = this._parse_json_response(response_text);
+
+                        const ranked_articles = ranking.map(rank => top_articles[rank-1]).filter(Boolean);
+                        const ranked_pmids = new Set(ranked_articles.map(a => a.pmid));
+                        const unranked_top = top_articles.filter(a => !ranked_pmids.has(a.pmid));
+                        const remaining = articles.filter(a => !top_articles.map(t=>t.pmid).includes(a.pmid));
+                        remaining.sort((a,b) => b.relevance_score - a.relevance_score);
+
+                        return [...ranked_articles, ...unranked_top, ...remaining];
+                    } catch(e) {
+                        console.error("Error in final ranking:", e);
+                        return articles.sort((a,b) => b.relevance_score - a.relevance_score);
+                    }
+                }
+
+                async _generate_search_summary(evolution, model) {
+                    let summary_data = `Original Query: ${evolution.original_query}\nTotal Unique Articles Found: ${evolution.total_unique_articles}\n\n`;
+                    evolution.iterations.forEach(iter => {
+                        summary_data += `Iteration ${iter.iteration}:\n`;
+                        summary_data += `  Search Terms: ${JSON.stringify(iter.search_terms)}\n`;
+                        summary_data += `  Lessons: ${iter.lessons_learned}\n\n`;
+                    });
+                    const prompt = this.prompts.SEARCH_SUMMARY.replace('{summary_data}', summary_data);
+                    try {
+                        return await this._call_openai_api(prompt, model, 600, 0.3);
+                    } catch(e) {
+                        console.error("Error generating search summary:", e);
+                        return "Error generating summary.";
+                    }
+                }
+
+                async summarize_top_abstracts(articles, num_articles, model) {
+                    const top_articles = articles.slice(0, num_articles);
+                    let abstracts_text = "";
+                    top_articles.forEach((a, i) => {
+                        abstracts_text += `\n${i+1}. ${a.title}\nPMID: ${a.pmid}\nAbstract: ${a.abstract}\n\n${'-'.repeat(80)}\n`;
+                    });
+
+                    const prompt = this.prompts.ABSTRACT_SUMMARY.replace('{abstracts}', abstracts_text);
+                    try {
+                        return await this._call_openai_api(prompt, model, 1000, 0.3);
+                    } catch(e) {
+                        console.error("Error summarizing abstracts:", e);
+                        return "Error generating summary.";
+                    }
+                }
+                
+                _analyzeStrategicVectors(ranked_articles, top_n = 20) {
+                    const leadAuthorCounts = new Map();
+                    const meshTermCounts = new Map();
+
+                    ranked_articles.slice(0, top_n).forEach(article => {
+                        if (article.leadAuthor && article.leadAuthor !== "N/A") {
+                            leadAuthorCounts.set(article.leadAuthor, (leadAuthorCounts.get(article.leadAuthor) || 0) + 1);
+                        }
+                        if (article.meshTerms) {
+                            article.meshTerms.forEach(term => {
+                                meshTermCounts.set(term, (meshTermCounts.get(term) || 0) + 1);
+                            });
+                        }
+                    });
+
+                    const sortedAuthors = [...leadAuthorCounts.entries()]
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([author, count]) => ({ author, count }));
+
+                    const sortedMeshTerms = [...meshTermCounts.entries()]
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([term, count]) => ({ term, count }));
+
+                    return { topAuthors: sortedAuthors, topMeshTerms: sortedMeshTerms };
+                }
+
+                async validate_mesh_term(term) {
+                    const params = new URLSearchParams({ db: 'mesh', term: term, tool: this.tool_name, email: this.email });
+                    try {
+                        const response = await fetch(`${this.cors_proxy_url}${this.base_search_url}?${params}`);
+                        await this._delay();
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                        const text = await response.text();
+                        const parser = new DOMParser();
+                        const xmlDoc = parser.parseFromString(text, "text/xml");
+                        const count = xmlDoc.querySelector("Count")?.textContent || '0';
+                        return parseInt(count, 10) > 0;
+                    } catch (e) {
+                        console.error("Error validating MeSH term:", e);
+                        return false;
+                    }
+                }
+            }
+            
+            // --- UI Controller ---
+            const App = {
+                searcher: new AdvancedPubMedSearcher(),
+                current_evolution: null,
+                
+                // DOM element references
+                dom: {},
+
+                init() {
+                    this.cacheDom();
+                    this.bindEvents();
+                    this.setupPromptEditor();
+                    this.loadApiKey();
+                },
+
+                cacheDom() {
+                    const ids = [
+                        'query-entry', 'mesh-term-entry', 'validate-mesh-btn', 'mesh-validator-result',
+                        'iterations-input', 'articles-per-iter-input', 'top-articles-input', 'model-select',
+                        'token-display', 'search-btn', 'progress-text', 'progress-bar', 'iteration-text',
+                        'top-articles-text', 'summary-count-input', 'generate-summary-btn', 'summary-text',
+                        'save-top-articles-btn', 'save-summary-btn', 'export-all-btn',
+                        'evolution-summary-text', 'rankings-text',
+                        'api-key-entry', 'set-api-key-btn', 'test-api-key-btn', 'api-key-test-result', 'prompt-editor-container',
+                        'apply-prompts-btn', 'reset-prompts-btn',
+                        'top-authors-text', 'top-mesh-terms-text'
+                    ];
+                    ids.forEach(id => this.dom[id.replace(/-(\w)/g, (m, g) => g.toUpperCase())] = document.getElementById(id));
+                    this.dom.promptTabs = document.querySelector('.prompt-tabs');
+                },
+
+                bindEvents() {
+                    document.querySelectorAll('.tab-button').forEach(button => button.addEventListener('click', e => this.openTab(e, e.target.getAttribute('onclick').match(/'([^']*)'/)[1])));
+                    this.dom.searchBtn.addEventListener('click', () => this.startIterativeSearch());
+                    this.dom.setApiKeyBtn.addEventListener('click', () => this.setApiKey());
+                    this.dom.testApiKeyBtn.addEventListener('click', () => this.testApiKey());
+                    this.dom.validateMeshBtn.addEventListener('click', () => this.validateMeshTerm());
+                    this.dom.generateSummaryBtn.addEventListener('click', () => this.generateAbstractSummary());
+                    this.dom.applyPromptsBtn.addEventListener('click', () => this.applyCustomPrompts());
+                    this.dom.resetPromptsBtn.addEventListener('click', () => this.resetPrompts());
+                    this.dom.saveTopArticlesBtn.addEventListener('click', () => this.saveContent(this.dom.topArticlesText.innerHTML, 'top_articles.html'));
+                    this.dom.saveSummaryBtn.addEventListener('click', () => this.saveContent(this.dom.summaryText.innerText, 'summary.txt'));
+                    this.dom.exportAllBtn.addEventListener('click', () => this.exportAllResults());
+                },
+
+                openTab(event, tabId) {
+                    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+                    document.querySelectorAll('.tab-button').forEach(tb => tb.classList.remove('active'));
+                    document.getElementById(tabId).classList.add('active');
+                    event.currentTarget.classList.add('active');
+                },
+
+                loadApiKey() {
+                    const key = localStorage.getItem('openai_api_key');
+                    if (key) {
+                        this.dom.apiKeyEntry.value = key;
+                        this.setApiKey();
+                    }
+                },
+                
+                async testApiKey() {
+                    const apiKey = this.dom.apiKeyEntry.value.trim();
+                    const resultDiv = this.dom.apiKeyTestResult;
+                    
+                    if (!apiKey) {
+                        resultDiv.textContent = '❌ Please enter an API key';
+                        resultDiv.className = 'api-test-failure';
+                        return;
+                    }
+                    
+                    resultDiv.textContent = 'Testing API key...';
+                    resultDiv.className = '';
+                    
+                    try {
+                        const response = await fetch("https://api.openai.com/v1/models", {
+                            method: "GET",
+                            headers: { "Authorization": `Bearer ${apiKey}` }
+                        });
+                        
+                        if (response.ok) {
+                            resultDiv.textContent = '✅ API key is valid!';
+                            resultDiv.className = 'api-test-success';
+                        } else {
+                            const error = await response.json().catch(() => ({ error: { message: "Invalid key" } }));
+                            resultDiv.textContent = `❌ ${error.error?.message || response.statusText}`;
+                            resultDiv.className = 'api-test-failure';
+                        }
+                    } catch (error) {
+                        resultDiv.textContent = `❌ Connection error: ${error.message}`;
+                        resultDiv.className = 'api-test-failure';
+                    }
+                },
+
+                setApiKey() {
+                    const apiKey = this.dom.apiKeyEntry.value.trim();
+                    if (apiKey) {
+                        this.searcher.set_api_key(apiKey);
+                        localStorage.setItem('openai_api_key', apiKey);
+                        alert("API key set and saved locally.");
+                    } else {
+                        alert("Please enter a valid API key.");
+                    }
+                },
+
+                async validateMeshTerm() {
+                    const term = this.dom.meshTermEntry.value.trim();
+                    if (!term) {
+                        this.dom.meshValidatorResult.textContent = 'Please enter a term.';
+                        return;
+                    }
+                    this.dom.meshValidatorResult.textContent = 'Validating...';
+                    const isValid = await this.searcher.validate_mesh_term(term);
+                    this.dom.meshValidatorResult.textContent = isValid ? `✅ "${term}" is a valid MeSH term.` : `❌ "${term}" is not a valid MeSH term.`;
+                    this.dom.meshValidatorResult.className = isValid ? 'valid' : 'invalid';
+                },
+
+                async startIterativeSearch() {
+                    const query = this.dom.queryEntry.value.trim();
+                    if (!query) {
+                        alert("Please enter a research query.");
+                        return;
+                    }
+                    if (!this.searcher.openai_api_key) {
+                        alert("Please set your OpenAI API key in the Configuration tab.");
+                        return;
+                    }
+
+                    this.dom.searchBtn.disabled = true;
+                    this.dom.progressBar.style.width = '0%';
+                    this.dom.progressBar.classList.remove('finished');
+                    this.dom.progressText.textContent = "Initializing iterative search...";
+                    this.clearResults();
+                    
+                    this.searcher.set_callbacks(
+                        (tc) => this.updateTokenDisplay(tc),
+                        (msg) => this.updateIterationLog(msg)
+                    );
+                    
+                    try {
+                        this.updateIterationLog(`🚀 Starting iterative search for: ${query}\n`);
+                        this.current_evolution = await this.searcher.perform_iterative_search(
+                            query,
+                            parseInt(this.dom.iterationsInput.value),
+                            parseInt(this.dom.articlesPerIterInput.value),
+                            parseInt(this.dom.topArticlesInput.value),
+                            this.dom.modelSelect.value
+                        );
+                        this.displayResults();
+                        this.dom.progressText.textContent = "✅ Iterative search completed successfully!";
+                        this.dom.progressBar.style.width = '100%';
+                        this.dom.progressBar.classList.add('finished');
+                    } catch (e) {
+                        console.error("Search failed:", e);
+                        this.dom.progressText.textContent = `❌ Error during search: ${e.message}`;
+                        this.updateIterationLog(`\n\n❌ ERROR: ${e.message}`);
+                    } finally {
+                        this.dom.searchBtn.disabled = false;
+                    }
+                },
+
+                clearResults() {
+                    this.dom.iterationText.textContent = '';
+                    this.dom.topArticlesText.innerHTML = '';
+                    this.dom.summaryText.textContent = '';
+                    this.dom.evolutionSummaryText.textContent = '';
+                    this.dom.rankingsText.textContent = '';
+                    this.dom.topAuthorsText.innerHTML = '';
+                    this.dom.topMeshTermsText.innerHTML = '';
+                    this.updateTokenDisplay(new TokenCounter());
+                },
+
+                updateTokenDisplay(tokenCounter) {
+                    const cost = tokenCounter.get_cost_estimate(this.dom.modelSelect.value);
+                    this.dom.tokenDisplay.textContent = `In: ${tokenCounter.input_tokens.toLocaleString()} | Out: ${tokenCounter.output_tokens.toLocaleString()} | Cost: $${cost.toFixed(2)}`;
+                },
+
+                updateIterationLog(message) {
+                    this.dom.iterationText.textContent += message;
+                    this.dom.iterationText.scrollTop = this.dom.iterationText.scrollHeight;
+                    const iterationMatch = message.match(/ITERATION (\d+)\/(\d+)/);
+                    if (iterationMatch) {
+                        const current = parseInt(iterationMatch[1]);
+                        const total = parseInt(iterationMatch[2]);
+                        this.dom.progressBar.style.width = `${((current - 0.5) / total) * 100}%`;
+                    }
+                },
+                
+                displayResults() {
+                    if (!this.current_evolution) return;
+                    this.displayTopArticles(this.current_evolution.final_ranking);
+                    this.displayEvolutionSummary(this.current_evolution.search_summary);
+                    this.displayFinalRankings(this.current_evolution.final_ranking);
+                    if (this.current_evolution.final_ranking.length > 0) {
+                        const strategicVectors = this.searcher._analyzeStrategicVectors(this.current_evolution.final_ranking);
+                        this.displayStrategicAnalysis(strategicVectors);
+                    }
+                },
+
+                displayTopArticles(ranking) {
+                    this.dom.topArticlesText.innerHTML = '';
+                    if (!ranking || ranking.length === 0) {
+                        this.dom.topArticlesText.textContent = "No articles found.";
+                        return;
+                    }
+                    ranking.slice(0, 5).forEach((article, i) => {
+                        const articleDiv = document.createElement('div');
+                        articleDiv.className = 'article';
+                        articleDiv.innerHTML = `
+                            <h3>#${i + 1}. ${article.title}</h3>
+                            <p class="article-meta">
+                                <strong>Authors:</strong> ${article.authors.slice(0, 3).join(', ')}${article.authors.length > 3 ? ` et al.` : ''}<br>
+                                <strong>Journal:</strong> ${article.journal} (${article.pub_date}) | <strong>PMID:</strong> ${article.pmid}<br>
+                                <strong>Score:</strong> ${article.relevance_score.toFixed(1)}/100 | <strong>Found in Iteration:</strong> ${article.found_in_iteration}<br>
+                                <strong>URL:</strong> <a href="https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/" target="_blank">https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/</a>
+                            </p>
+                            <p class="article-reasoning"><strong>AI Assessment:</strong> ${article.ai_reasoning}</p>
+                            ${article.abstract ? `<p class="article-abstract"><strong>ABSTRACT:</strong><br>${article.abstract}</p>` : ''}
+                        `;
+                        this.dom.topArticlesText.appendChild(articleDiv);
+                    });
+                },
+
+                displayEvolutionSummary(summary) {
+                    this.dom.evolutionSummaryText.textContent = summary;
+                },
+
+                displayFinalRankings(ranking) {
+                    if (!ranking || ranking.length === 0) {
+                        this.dom.rankingsText.textContent = "No articles found.";
+                        return;
+                    }
+                    let text = `COMPLETE ARTICLE RANKINGS (Total: ${ranking.length})\n${'='.repeat(50)}\n\n`;
+                    ranking.forEach((article, i) => {
+                        text += `${(i + 1).toString().padStart(3)}. ${article.title}\n`;
+                        text += `      Journal: ${article.journal} (${article.pub_date}) | PMID: ${article.pmid}\n`;
+                        text += `      Score: ${article.relevance_score.toFixed(1)} | Iteration: ${article.found_in_iteration}\n`;
+                        text += `      URL: https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/\n\n`;
+                    });
+                    this.dom.rankingsText.textContent = text;
+                },
+
+                displayStrategicAnalysis({ topAuthors, topMeshTerms }) {
+                    const authorList = topAuthors.map(item => `<li>${item.author} (Count: ${item.count})</li>`).join('');
+                    this.dom.topAuthorsText.innerHTML = topAuthors.length > 0 ? `<ul>${authorList}</ul>` : 'No recurring lead authors found in top articles.';
+
+                    const meshList = topMeshTerms.map(item => `<li>${item.term} (Count: ${item.count})</li>`).join('');
+                    this.dom.topMeshTermsText.innerHTML = topMeshTerms.length > 0 ? `<ul>${meshList}</ul>` : 'No recurring MeSH terms found in top articles.';
+                },
+
+                async generateAbstractSummary() {
+                    if (!this.current_evolution || this.current_evolution.final_ranking.length === 0) {
+                        alert("No search results available for summary.");
+                        return;
+                    }
+                    this.dom.summaryText.textContent = "Generating summary, please wait...";
+                    try {
+                        const num_articles = parseInt(this.dom.summaryCountInput.value);
+                        const summary = await this.searcher.summarize_top_abstracts(
+                            this.current_evolution.final_ranking, num_articles, this.dom.modelSelect.value
+                        );
+                        this.dom.summaryText.textContent = `AI SUMMARY OF TOP ${num_articles} ARTICLES\n${'='.repeat(50)}\n\n${summary}`;
+                    } catch(e) {
+                        this.dom.summaryText.textContent = `Error generating summary: ${e.message}`;
+                    }
+                },
+
+                saveContent(content, filename) {
+                    if (!content) {
+                        alert("No content to save.");
+                        return;
+                    }
+                    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                },
+
+                exportAllResults() {
+                    if (!this.current_evolution) {
+                        alert("No results to export.");
+                        return;
+                    }
+                    let content = `ADVANCED ITERATIVE PUBMED SEARCH RESULTS\nGenerated: ${new Date().toISOString()}\n\n`;
+                    content += `ORIGINAL QUERY: ${this.current_evolution.original_query}\n\n`;
+                    content += `SEARCH EVOLUTION:\n${'-'.repeat(40)}\n${this.dom.evolutionSummaryText.textContent}\n\n`;
+                    content += `ITERATION DETAILS:\n${'-'.repeat(40)}\n${this.dom.iterationText.textContent}\n\n`;
+                    content += `COMPLETE RANKINGS:\n${'-'.repeat(40)}\n${this.dom.rankingsText.textContent}\n\n`;
+                    if (this.dom.summaryText.textContent) {
+                        content += `ABSTRACT SUMMARY:\n${'-'.repeat(40)}\n${this.dom.summaryText.textContent}\n`;
+                    }
+                    this.saveContent(content, `complete_results_${new Date().toISOString().split('T')[0]}.txt`);
+                },
+
+                // --- Prompt Editor Logic ---
+                setupPromptEditor() {
+                    this.dom.promptTexts = {};
+                    Object.keys(DefaultPromptTemplates).forEach((key, index) => {
+                        const title = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        
+                        // Button
+                        const button = document.createElement('button');
+                        button.className = 'prompt-tab-button';
+                        button.textContent = title;
+                        button.dataset.key = key;
+                        this.dom.promptTabs.appendChild(button);
+
+                        // Textarea
+                        const textarea = document.createElement('textarea');
+                        textarea.className = 'prompt-editor';
+                        textarea.dataset.key = key;
+                        textarea.value = DefaultPromptTemplates[key];
+                        this.dom.promptEditorContainer.appendChild(textarea);
+                        this.dom.promptTexts[key] = textarea;
+
+                        if (index === 0) {
+                            button.classList.add('active');
+                            textarea.classList.add('active');
+                        }
+                        
+                        button.addEventListener('click', (e) => this.openPromptTab(e.target.dataset.key));
+                    });
+                },
+                
+                openPromptTab(key) {
+                    document.querySelectorAll('.prompt-tab-button').forEach(btn => btn.classList.toggle('active', btn.dataset.key === key));
+                    document.querySelectorAll('.prompt-editor').forEach(editor => editor.classList.toggle('active', editor.dataset.key === key));
+                },
+
+                applyCustomPrompts() {
+                    try {
+                        Object.keys(this.dom.promptTexts).forEach(key => {
+                            this.searcher.prompts[key] = this.dom.promptTexts[key].value;
+                        });
+                        alert("Custom prompts applied successfully!");
+                    } catch (e) {
+                        alert(`Failed to apply custom prompts: ${e.message}`);
+                    }
+                },
+
+                resetPrompts() {
+                    if (confirm("Are you sure you want to reset all prompts to their defaults?")) {
+                        this.searcher.prompts = { ...DefaultPromptTemplates };
+                        Object.keys(this.dom.promptTexts).forEach(key => {
+                            this.dom.promptTexts[key].value = DefaultPromptTemplates[key];
+                        });
+                        alert("Prompts have been reset to defaults.");
+                    }
+                }
+            };
+
+            App.init();
+        });
+
+        // Helper function for tab navigation, defined globally for inline onclick
+        function openTab(event, tabId) {
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(tb => tb.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+    </script>
+</body>
+</html>
