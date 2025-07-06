@@ -537,21 +537,42 @@ Identify and list the 2 to 4 most important key terms. These should be nouns or 
 Return only a JSON array of strings:
 ["term1", "term2", "term3", ...]`,
 
-                REFINED_SEARCH_TERMS: `Based on the search evolution below, generate 4-5 NEW and IMPROVED PubMed search strategies.
+                STRATEGIC_REVIEW: `You are a research strategist. Analyze the following top-ranked articles from a recent search. Your goal is to identify the most promising vectors (lead authors and MeSH terms) to guide the *next* round of searching.
 
+Query: "{query}"
+
+Top Articles from Last Iteration:
+{top_articles_summary}
+
+From the articles above, identify:
+1. The 2-3 most influential lead authors. These should be authors of the highest-scoring or most directly relevant papers.
+2. The 3-4 most recurring or highly specific MeSH terms that are central to the relevant articles.
+
+Return ONLY a JSON object with this exact structure:
+{
+  "promising_authors": ["Author One", "Author Two"],
+  "promising_mesh": ["MeSH Term A", "MeSH Term B", "MeSH Term C"]
+}`,
+
+                REFINED_SEARCH_TERMS: `You are a PubMed search expert. Your task is to generate 5 new, diverse search strategies based on previous results and a strategic analysis.
+
+Original Query: {query}
+
+Previous Search History:
 {context}
 
-IMPORTANT: 
-- DO NOT repeat previous search strategies
-- Learn from what worked/didn't work. If previous searches returned 0 results, the terms were too specific. Make the new searches broader by using fewer terms or more general concepts.
-- Try different angles, terminology, and approaches
-- Focus on gaps or promising directions from previous results
-- Consider the "next strategy" suggestions from previous iterations
+AI Strategic Analysis from last iteration:
+{strategic_review_results}
 
-Generate diverse new search terms using proper PubMed syntax.
+Instructions:
+- Create 5 NEW, DIVERSE search queries. Do not repeat previous searches.
+- Use the promising authors and MeSH terms to create a mix of search types:
+  - **Author-focused searches:** Create at least one query for a promising author to discover their other relevant work. Use the \`[auth]\` tag (e.g., "\\"Smith J\\"[auth]"). This type of search should stand alone to avoid being too restrictive.
+  - **MeSH-focused searches:** Create queries that combine the promising MeSH terms in new ways (e.g., "\\"Metabolism\\"[Mesh] AND \\"Adipose Tissue\\"[Mesh]").
+  - **Hybrid searches (use sparingly):** You may create ONE highly specific query that combines a key concept with a top author if you believe it will find a critical paper (e.g., \`("pcos"[tiab] OR "Polycystic Ovary Syndrome"[Mesh]) AND "Smith J"[auth]\`).
+- Ensure all queries use correct PubMed syntax.
 
-Return only a JSON array of search strings:
-["search1", "search2", "search3", "search4", "search5"]`,
+Return ONLY a JSON array of 5 search strings.`,
 
                 ARTICLE_ANALYSIS: `Analyze these medical research articles for relevance to the query: "{query}"
 
@@ -688,17 +709,24 @@ Make the summary comprehensive but accessible to both researchers and clinicians
 
                 _parse_json_response(text) {
                     try {
-                        // Find the first and last brackets to handle leading/trailing text
-                        const startIndex = text.indexOf('[');
-                        const endIndex = text.lastIndexOf(']');
-                        if (startIndex === -1 || endIndex === -1) {
-                            throw new Error("No JSON array found in response");
+                        let json_str = text;
+                        const startIndex = text.indexOf('{');
+                        const endIndex = text.lastIndexOf('}');
+                        const startBracket = text.indexOf('[');
+                        const endBracket = text.lastIndexOf(']');
+                        
+                        if (startBracket !== -1 && (startIndex === -1 || startBracket < startIndex)) {
+                             if (endBracket !== -1) {
+                                json_str = text.substring(startBracket, endBracket + 1);
+                             }
+                        } else if (startIndex !== -1 && endIndex !== -1) {
+                            json_str = text.substring(startIndex, endIndex + 1);
                         }
-                        const json_str = text.substring(startIndex, endIndex + 1);
+
                         return JSON.parse(json_str);
                     } catch (e) {
                         console.error("Failed to parse JSON:", text, e);
-                        throw new Error("Could not parse AI response as JSON.");
+                        throw new Error("Could not parse AI response as valid JSON.");
                     }
                 }
                 
@@ -707,6 +735,7 @@ Make the summary comprehensive but accessible to both researchers and clinicians
                     this.token_counter.reset();
                     const all_articles = new Map();
                     const iteration_history = [];
+                    let strategic_review_results = null;
 
                     this.iteration_update_callback(`Starting iterative search for: ${query}\n`);
 
@@ -717,7 +746,7 @@ Make the summary comprehensive but accessible to both researchers and clinicians
                         if (i === 0) {
                             search_terms = await this._generate_initial_search_terms(query, model);
                         } else {
-                            search_terms = await this._generate_refined_search_terms(query, iteration_history, model);
+                            search_terms = await this._generate_refined_search_terms(query, iteration_history, strategic_review_results, model);
                         }
 
                         this.iteration_update_callback(`🔍 Validating AI-generated MeSH terms...\n`);
@@ -760,6 +789,14 @@ Make the summary comprehensive but accessible to both researchers and clinicians
                                 top_articles = analyzed_articles.sort((a, b) => b.relevance_score - a.relevance_score).slice(0, top_articles_per_iteration);
                             }
                         }
+
+                        // Perform Strategic Review for next iteration (except for the last one)
+                        if (top_articles.length > 0 && i < max_iterations - 1) {
+                            this.iteration_update_callback(`🧠 Performing strategic review for next iteration...\n`);
+                            strategic_review_results = await this._perform_strategic_review(query, top_articles, model);
+                            this.iteration_update_callback(`💡 AI suggests focusing on authors: ${JSON.stringify(strategic_review_results.promising_authors)}\n`);
+                            this.iteration_update_callback(`💡 AI suggests focusing on MeSH: ${JSON.stringify(strategic_review_results.promising_mesh)}\n`);
+                        }
                         
                         const { analysis, lessons_learned, next_strategy } = await this._generate_iteration_insights(query, search_terms, top_articles, i, model);
 
@@ -769,7 +806,6 @@ Make the summary comprehensive but accessible to both researchers and clinicians
                                 this.iteration_update_callback(`${idx+1}. ${article.title.substring(0, 80)}... (Score: ${article.relevance_score})\n`);
                             });
                             this.iteration_update_callback(`\n💡 Lessons learned: ${lessons_learned}\n`);
-                            this.iteration_update_callback(`📍 Next strategy: ${next_strategy}\n`);
                         } else if (unique_pmids.length === 0) {
                              this.iteration_update_callback(`\n⚠️ No articles found. AI analysis suggests: ${lessons_learned}\n`);
                         }
@@ -863,8 +899,26 @@ Make the summary comprehensive but accessible to both researchers and clinicians
                         return [query.split(' ').filter(word => word.length > 2).join(' AND ')];
                     }
                 }
+
+                async _perform_strategic_review(query, top_articles, model) {
+                    const articles_summary = top_articles.map(a => 
+                        `Title: ${a.title}\nScore: ${a.relevance_score}\nLead Author: ${a.leadAuthor}\nMeSH Terms: ${a.meshTerms.join(', ')}\nReasoning: ${a.ai_reasoning}`
+                    ).join('\n\n');
+
+                    const prompt = this.prompts.STRATEGIC_REVIEW
+                        .replace('{query}', query)
+                        .replace('{top_articles_summary}', articles_summary);
+                    
+                    try {
+                        const response_text = await this._call_openai_api(prompt, model, 400, 0.2);
+                        return this._parse_json_response(response_text);
+                    } catch (e) {
+                        console.error("Error performing strategic review:", e);
+                        return { promising_authors: [], promising_mesh: [] }; // Return empty object on failure
+                    }
+                }
                 
-                async _generate_refined_search_terms(query, iteration_history, model) {
+                async _generate_refined_search_terms(query, iteration_history, strategic_review_results, model) {
                     let context = `Original query: ${query}\n\nPrevious iteration results:\n`;
                     iteration_history.slice(-2).forEach(iter => {
                         context += `\nIteration ${iter.iteration}:\n`;
@@ -872,11 +926,17 @@ Make the summary comprehensive but accessible to both researchers and clinicians
                         context += `Results: ${iter.filtered_results_count} unique articles found.\n`;
                         context += `Lessons learned: ${iter.lessons_learned}\n`;
                         if(iter.top_articles.length > 0) context += `Best article found: ${iter.top_articles[0].title}\n`;
-                        context += `Next strategy suggested: ${iter.next_strategy}\n`;
                     });
-                    const prompt = this.prompts.REFINED_SEARCH_TERMS.replace('{context}', context);
+
+                    const strategic_json = JSON.stringify(strategic_review_results, null, 2);
+
+                    const prompt = this.prompts.REFINED_SEARCH_TERMS
+                        .replace('{query}', query)
+                        .replace('{context}', context)
+                        .replace('{strategic_review_results}', strategic_json);
+
                     try {
-                        const response_text = await this._call_openai_api(prompt, model, 600, 0.4);
+                        const response_text = await this._call_openai_api(prompt, model, 700, 0.5);
                         return this._parse_json_response(response_text);
                     } catch (e) {
                         console.error("Error generating refined search terms, falling back to default.", e);
@@ -971,7 +1031,7 @@ Make the summary comprehensive but accessible to both researchers and clinicians
                         .replace('{articles}', JSON.stringify(article_data, null, 2));
 
                     try {
-                        const response_text = await this._call_openai_api(prompt, model, 1200, 0.2);
+                        const response_text = await this._call_openai_api(prompt, model, 1500, 0.2);
                         const analysis = this._parse_json_response(response_text);
                         
                         analysis.forEach(result => {
